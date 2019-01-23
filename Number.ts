@@ -11,3 +11,8 @@ function _round(number, powerOfTen) {
 function _isNaN(number) {
   return number !== number;
 }
+
+module.exports = {
+  _round: _round,
+  _isNaN: _isNaN
+};

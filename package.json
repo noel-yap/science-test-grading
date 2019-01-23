@@ -18,5 +18,9 @@
   "homepage": "https://github.com/november-yankee/science-test-grading#readme",
   "devDependencies": {
     "ava": "^1.1.0"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {}
 }

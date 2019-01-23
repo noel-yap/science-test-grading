@@ -1,0 +1,22 @@
+{
+  "name": "science-olympiad",
+  "version": "1.0.0",
+  "description": "Custom Google Sheets functions for scientific number conversions and SI unit conversions. See https://docs.google.com/spreadsheets/d/1SDcEtxPL-MLwfZfpJnPd8Je3cA1VvoVJ7pcTojOu1E0/edit?usp=sharing for example usage.",
+  "main": "Grade.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/november-yankee/science-test-grading.git"
+  },
+  "author": "Noel Yap",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/november-yankee/science-test-grading/issues"
+  },
+  "homepage": "https://github.com/november-yankee/science-test-grading#readme",
+  "devDependencies": {
+    "ava": "^1.1.0"
+  }
+}

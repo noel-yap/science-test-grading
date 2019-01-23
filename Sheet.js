@@ -17,6 +17,9 @@ function recalculatePoints() {
 }
 
 function _recalculatePoints(gradersEntriesSheet) {
+  const takerAnswersStartRow = _getGradingProperties(_getGradingProperties.getParent())["taker-answers-start-row"];
+  const answersHeaderRow = takerAnswersStartRow - 2;
+  
   const dataRange = gradersEntriesSheet.getDataRange();
   const width = dataRange.getWidth();
   const height = dataRange.getHeight();
@@ -25,10 +28,10 @@ function _recalculatePoints(gradersEntriesSheet) {
       .map(function (_, i) {
         return i + 1;
       }).filter(function (c) {
-        return gradersEntriesSheet.getRange(4, c).getValue().indexOf("Points") !== -1;
+        return gradersEntriesSheet.getRange(answersHeaderRow, c).getValue().indexOf("Points") !== -1;
       })
       .map(function (c) {
-        return gradersEntriesSheet.getRange(6, c, height - 5, 1);
+        return gradersEntriesSheet.getRange(takerAnswersStartRow, c, height - takerAnswersStartRow + 1, 1);
       });
   pointFormulaRanges.forEach(function (pointFormulaRange) {
     Logger.log("_recalculatePoints: pointFormulaRange = %s", pointFormulaRange);
@@ -64,6 +67,9 @@ function activateGradeMode() {
 }
 
 function _createKataGradersEntriesSheetFrom(fromSheet) {
+  const takerAnswersStartRow = _getGradingProperties(_getGradingProperties.getParent())["taker-answers-start-row"];
+  const creatorAnswersRow = takerAnswersStartRow - 1;
+
   const spreadsheet = fromSheet.getParent();
   const fromSheetName = fromSheet.getName();
   
@@ -87,10 +93,10 @@ function _createKataGradersEntriesSheetFrom(fromSheet) {
   kataGradersEntriesSheet.setName(kataGradersEntriesName);
   kataGradersEntriesSheet.getRange('$A$1').setValue('Kata');
   kataGradersEntriesSheet
-      .getRange(5, 1, 1, kataWidth)
+      .getRange(creatorAnswersRow, 1, 1, kataWidth)
       .setFormulaR1C1([ "'", fromSheetName, "'!R[0]C[0]" ].join(""));
   kataGradersEntriesSheet
-      .getRange(6, 2, kataHeight - 5, 1)
+      .getRange(takerAnswersStartRow, 2, kataHeight - takerAnswersStartRow + 1, 1)
       .setFormulaR1C1([ "'", fromSheetName, "'!R[0]C[0]" ].join(""));
 
   _protectNonDataEntryCells(kataGradersEntriesSheet);

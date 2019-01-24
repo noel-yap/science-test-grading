@@ -3,7 +3,7 @@ function _round(number, powerOfTen) {
   
   const result = Math.round(number/tenToThePower)*tenToThePower;
   
-  Logger.log("_round: number = %s, powerOfTen = %s, result = %s", number, powerOfTen, result);
+  console.log("_round: number = %s, powerOfTen = %s, result = %s", number, powerOfTen, result);
   
   return result;
 }

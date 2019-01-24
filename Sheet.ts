@@ -17,7 +17,7 @@ function recalculatePoints() {
 }
 
 function _recalculatePoints(gradersEntriesSheet) {
-  const takerAnswersStartRow = _getGradingProperties(_getGradingProperties.getParent())["taker-answers-start-row"];
+  const takerAnswersStartRow = _getGradingProperties(gradersEntriesSheet.getParent())["taker-answers-start-row"];
   const answersHeaderRow = takerAnswersStartRow - 2;
   
   const dataRange = gradersEntriesSheet.getDataRange();
@@ -46,7 +46,8 @@ function _recalculatePoints(gradersEntriesSheet) {
 function activateCreateMode() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   
-  _showSheetsNotUsedDirectlyByGraders(spreadsheet);
+  _reorderSheets(spreadsheet);
+  //_showSheetsNotUsedDirectlyByGraders(spreadsheet);
 }
 
 function activateGradeMode() {
@@ -67,11 +68,11 @@ function activateGradeMode() {
 }
 
 function _createKataGradersEntriesSheetFrom(fromSheet) {
-  const takerAnswersStartRow = _getGradingProperties(_getGradingProperties.getParent())["taker-answers-start-row"];
-  const creatorAnswersRow = takerAnswersStartRow - 1;
-
   const spreadsheet = fromSheet.getParent();
   const fromSheetName = fromSheet.getName();
+
+  const takerAnswersStartRow = _getGradingProperties(spreadsheet)["taker-answers-start-row"];
+  const creatorAnswersRow = takerAnswersStartRow - 1;
   
   const kataGradersEntriesName = "Kata Graders Entries";
 
@@ -199,7 +200,7 @@ function _reorderSheets(spreadsheet) {
       spreadsheet.setActiveSheet(sheet);
       spreadsheet.moveActiveSheet(1);
       
-      Utilities.sleep(200);
+      Utilities.sleep(500);
     }
   });
 }

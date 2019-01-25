@@ -1,9 +1,5 @@
 function _getGradingProperties(spreadsheet) {
-  const properties = spreadsheet.getRangeByName("grading.properties").getValues().reduce(function (accum, elt) {
-    accum[elt[0]] = elt[2];
-    
-    return accum;
-  }, {
+  const defaultValues = {
     "taker-answers-start-row": 6,
     "magnitude-portion": 0.75,
     "missing-magnitude": 0.75,
@@ -15,8 +11,21 @@ function _getGradingProperties(spreadsheet) {
     "units-portion": 0.25,
     "missing-units": 0.25,
     "incorrect-units": 0.1875
-  });
-  Logger.log(properties);
+  };
+  const gradingPropertiesRange = spreadsheet.getRangeByName("grading.properties");
+
+  const properties = gradingPropertiesRange === null
+    ?  defaultValues
+    : gradingPropertiesRange.getValues().reduce(function (accum, elt) {
+      accum[elt[0]] = elt[2];
+
+      return accum;
+    }, defaultValues);
+  console.log(properties);
 
   return properties;
 }
+
+module.exports = {
+  _getGradingProperties: _getGradingProperties,
+};

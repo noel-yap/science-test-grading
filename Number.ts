@@ -1,9 +1,9 @@
 function _round(number, powerOfTen) {
-  const tenToThePower = Math.pow(10, powerOfTen);
+  const tenToTheNegativePower = Math.pow(10, -powerOfTen);
+
+  const result = Math.round(number * tenToTheNegativePower) / tenToTheNegativePower;
   
-  const result = Math.round(number/tenToThePower)*tenToThePower;
-  
-  console.log("_round: number = %s, powerOfTen = %s, result = %s", number, powerOfTen, result);
+  console.log(`_round: number = ${number}, powerOfTen = ${powerOfTen}, result = ${result}`);
   
   return result;
 }

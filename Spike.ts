@@ -1,3 +1,0 @@
-function spike() {
-    return "aoeu";
-}

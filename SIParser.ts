@@ -1,6 +1,6 @@
 /**
- * Normalizes SI units into fundamental SI units (eg g, m, s) so it's easier to compare different representations (eg "50 kPa",
- * "50*10^3 kg/(m*s^2)", "5.0*10^4 kg*m^-1*s^-2").
+ * Normalizes SI units into fundamental SI units (eg g, m, s) so it's easier to compare different representations (eg '50 kPa',
+ * '50*10^3 kg/(m*s^2)', '5.0*10^4 kg*m^-1*s^-2').
  *
  * BNF grammar:
  *
@@ -53,17 +53,17 @@
  **/
 function normalizeUnits(string) {
   const normalizeUnitsResult = _throttle(_normalizeUnits, Array.prototype.slice.call(arguments));
-  Logger.log("_normalizeUnits: normalizeUnitsResult = %s", normalizeUnitsResult);
+  console.log('_normalizeUnits: normalizeUnitsResult = %s', normalizeUnitsResult);
   
   if (normalizeUnitsResult.success) {
     const magnitudeString = normalizeUnitsResult.result.magnitude;
     const unitsString = normalizeUnitsResult.result.units;
 
-    return magnitudeString === "" && unitsString === ""
-        ? ""
+    return magnitudeString === '' && unitsString === ''
+        ? ''
         : magnitudeString + (unitsString === '%' || unitsString === '' ? '' : ' ') + unitsString;
   } else {
-    throw new Error("Unable to parse after `" + normalizeUnitsResult.consumed + "` in `" + string + "`. Are you sure metric units are being used?");
+    throw new Error('Unable to parse after `' + normalizeUnitsResult.consumed + '` in `' + string + '`. Are you sure metric units are being used?');
   }
 }
 
@@ -73,42 +73,42 @@ function _normalizeUnits(string) {
     success: false
   };
   
-  Logger.log("_normalizeUnits: string = %s, typeof(string) = %s", string, typeof(string));
-  if (typeof(string) !== "string") {
-    throw new Error("'" + string + "' must be of type string but is of type " + typeof(string) + ".", string, typeof(string));
+  console.log('_normalizeUnits: string = %s, typeof(string) = %s', string, typeof(string));
+  if (typeof(string) !== 'string') {
+    throw new Error(`'${string}' must be of type string but is of type '${typeof(string)}'.`);
   }
   
   string = string.split(' ').join('');
   
-  if (string === "") {
+  if (string === '') {
     return {
-      consumed: "",
-      rest: "",
+      consumed: '',
+      rest: '',
       result: {
-        magnitude: "",
-        units: ""
+        magnitude: '',
+        units: ''
       },
       success: true
     };
   }
   
   const expressionResult = _parseExpression(string);
-  Logger.log("_normalizeUnits: expressionResult = %s", expressionResult);
+  console.log('_normalizeUnits: expressionResult = %s', expressionResult);
   
   if (expressionResult.success) {
     const magnitude = expressionResult.result.magnitude;
     const exponents = expressionResult.result.exponents;
     
-    const units = [ "10", "g", "m", "s", "A", "K", "cd", "mol", "%", "ppm", "ppb", "ppt", "ppq" ].filter(function (unit) {
+    const units = [ '10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol', '%', 'ppm', 'ppb', 'ppt', 'ppq' ].filter((unit) => {
       return exponents.hasOwnProperty(unit);
     });
     
-    const magnitudeString = magnitude.toString() + (exponents["10"] !== 0
-      ? "*10^" + exponents["10"]
+    const magnitudeString = magnitude.toString() + (exponents['10'] !== 0
+      ? '*10^' + exponents['10']
       : '');
-    const unitsString = units.filter(function (unit) {
-      return unit !== "10";
-    }).map(function (unit) {
+    const unitsString = units.filter((unit) => {
+      return unit !== '10';
+    }).map((unit) => {
       return unit + (exponents[unit] !== 1
         ? '^' + exponents[unit]
         : '');
@@ -124,7 +124,7 @@ function _normalizeUnits(string) {
       success: true
     };
   } else {
-    failureResult["consumed"] = expressionResult.consumed;
+    failureResult['consumed'] = expressionResult.consumed;
   }
   
   return failureResult;
@@ -135,6 +135,7 @@ function _normalizeUnits(string) {
  *                  | <magnitude> <asterix-term>
  *                  | <magnitude> <slash-term>
  *                  | <magnitude>
+ *                  | <term>
  **/
 function _parseExpression(string) {
   const failureResult = {
@@ -143,9 +144,9 @@ function _parseExpression(string) {
   };
   
   const magnitudeResult = _parseMagnitude(string);
-  Logger.log("_parseExpression: magnitudeResult = %s", magnitudeResult);
+  console.log('_parseExpression: magnitudeResult = %s', magnitudeResult);
   
-  if (magnitudeResult.success) {
+  if (magnitudeResult.success || magnitudeResult.consumed === '') {
     if (magnitudeResult.rest) {
       const operator = magnitudeResult.rest[0] === '*'
           ? '*'
@@ -157,31 +158,35 @@ function _parseExpression(string) {
           : 1);
       
       const termResult = _parseTerm(rest);
-      Logger.log("_parseExpression: termResult = %s", termResult);
+      console.log('_parseExpression: termResult = %s', termResult);
       
       const consumed = magnitudeResult.consumed + operator + termResult.consumed;
       
       if (termResult.success) {
         const exponents = termResult.result.exponents;
-        exponents["10"] += magnitudeResult.result.exponent
         if (operator === '/') {
-          Object.keys(exponents).forEach(function (key) {
+          Object.keys(exponents).forEach((key) => {
             exponents[key] = -exponents[key];
           })
         }
-        
+        if (magnitudeResult.success) {
+          exponents['10'] += magnitudeResult.result.exponent;
+        }
+
         return {
           consumed: consumed,
           rest: termResult.rest,
           result: {
             // FIXME: This is the wrong thing to do for '/'.
-            magnitude: termResult.result.conversion(magnitudeResult.result.significand),
+            magnitude: magnitudeResult.success
+                ? termResult.result.conversion(magnitudeResult.result.significand)
+                : NaN,
             exponents: exponents
           },
           success: true
         };
       } else {
-        failureResult["consumed"] = consumed;
+        failureResult['consumed'] = consumed;
       }
     } else {
       return {
@@ -190,14 +195,14 @@ function _parseExpression(string) {
         result: {
           magnitude: magnitudeResult.result.significand,
           exponents: {
-            "10": magnitudeResult.result.exponent
+            '10': magnitudeResult.result.exponent
           }
         },
         success: true
       };
     }
   } else {
-    failureResult["consumed"] = magnitudeResult.consumed;
+    failureResult['consumed'] = magnitudeResult.consumed;
   }
   
   return failureResult;
@@ -216,17 +221,17 @@ function _parseMagnitude(string) {
   };
   
   const significandResult = _parseSignificand(string);
-  Logger.log("_parseMagnitude: significandResult = %s", significandResult);
+  console.log('_parseMagnitude: significandResult = %s', significandResult);
   
   if (significandResult.success) {
-    const operator = significandResult.rest.indexOf("*10^") === 0
-        ? "*10^"
+    const operator = significandResult.rest.indexOf('*10^') === 0
+        ? '*10^'
         : significandResult.rest.charAt(0) === 'E' || significandResult.rest.charAt(0) === 'e'
         ? significandResult.rest[0]
         : undefined;
     if (operator !== undefined) {
       const exponentResult = _parseExponent(significandResult.rest.substring(operator.length));
-      Logger.log("_parseMagnitude: exponentResult = %s", exponentResult);
+      console.log('_parseMagnitude: exponentResult = %s', exponentResult);
       
       const consumed = significandResult.consumed + operator + exponentResult.consumed;
       
@@ -241,7 +246,7 @@ function _parseMagnitude(string) {
           success: true
         };
       } else {
-        failureResult["consumed"] = consumed;
+        failureResult['consumed'] = consumed;
       }
     } else {
       return {
@@ -255,7 +260,7 @@ function _parseMagnitude(string) {
       };
     }
   } else {
-    failureResult["consumed"] = significandResult.consumed;
+    failureResult['consumed'] = significandResult.consumed;
   }
   
   return failureResult;
@@ -281,15 +286,15 @@ function _parseTerm(string) {
   };
   
   const openParenthesisResult = _parseChar(string, '(');
-  Logger.log("_parseTerm: openParenthesisResult = %s", openParenthesisResult);
+  console.log('_parseTerm: openParenthesisResult = %s', openParenthesisResult);
   
   if (openParenthesisResult.success) {
     const termBetweenParenthesesResult = _parseTerm(openParenthesisResult.rest);
-    Logger.log("_parseTerm: termBetweenParenthesesResult = %s", termBetweenParenthesesResult);
+    console.log('_parseTerm: termBetweenParenthesesResult = %s', termBetweenParenthesesResult);
     
     if (termBetweenParenthesesResult.success) {
       const closeParenthesisResult = _parseChar(termBetweenParenthesesResult.rest, ')');
-      Logger.log("_parseTerm: closeParenthesisResult = %s", closeParenthesisResult);
+      console.log('_parseTerm: closeParenthesisResult = %s', closeParenthesisResult);
       
       const consumedInclusiveBetweenParentheses = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed + closeParenthesisResult.consumed;
       
@@ -301,21 +306,21 @@ function _parseTerm(string) {
           success: true
         };
       } else {
-        failureResult["consumed"] = consumedInclusiveBetweenParentheses;
+        failureResult['consumed'] = consumedInclusiveBetweenParentheses;
       }
     } else {
-      failureResult["consumed"] = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed;
+      failureResult['consumed'] = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed;
     }
   } else {
     const factorResult = _parseFactor(string);
-    Logger.log("_parseTerm: factorResult = %s", factorResult);
+    console.log('_parseTerm: factorResult = %s', factorResult);
     
     if (factorResult.success) {
       const factorExponents = factorResult.result.exponents;
       const factorConversion = factorResult.result.conversion;
       
       const asterixTermResult = _parseAsterixTerm(factorResult.rest);
-      Logger.log("_parseTerm: asterixTermResult = %s", asterixTermResult);
+      console.log('_parseTerm: asterixTermResult = %s', asterixTermResult);
       
       const consumedAroundAsterix = factorResult.consumed + asterixTermResult.consumed;
         
@@ -324,7 +329,7 @@ function _parseTerm(string) {
         const asterixTermConversion = asterixTermResult.result.conversion;
         
         const exponentsAfterAsterix = factorExponents;
-        Object.keys(asterixTermExponents).forEach(function (termKey) {
+        Object.keys(asterixTermExponents).forEach((termKey) => {
           exponentsAfterAsterix[termKey] = (exponentsAfterAsterix[termKey] || 0) + asterixTermExponents[termKey];
         })
         
@@ -333,7 +338,7 @@ function _parseTerm(string) {
           rest: asterixTermResult.rest,
           result: {
             exponents: exponentsAfterAsterix,
-            conversion: function (magnitude) {
+            conversion: (magnitude) => {
               return factorConversion(asterixTermConversion(magnitude));
             }
           },
@@ -341,7 +346,7 @@ function _parseTerm(string) {
         };
       } else {
         const slashTermResult = _parseSlashTerm(factorResult.rest);
-        Logger.log("_parseTerm: slashTermResult = %s", slashTermResult);
+        console.log('_parseTerm: slashTermResult = %s', slashTermResult);
         
         const consumedAroundSlash = factorResult.consumed + slashTermResult.consumed;
           
@@ -350,7 +355,7 @@ function _parseTerm(string) {
           const slashTermConversion = slashTermResult.result.conversion;
           
           const exponentsAfterSlash = factorExponents;
-          Object.keys(slashTermExponents).forEach(function (termKey) {
+          Object.keys(slashTermExponents).forEach((termKey) => {
             exponentsAfterSlash[termKey] = (exponentsAfterSlash[termKey] || 0) - slashTermExponents[termKey];
           })
             
@@ -359,7 +364,7 @@ function _parseTerm(string) {
             rest: slashTermResult.rest,
             result: {
               exponents: exponentsAfterSlash,
-              conversion: function (magnitude) {
+              conversion: (magnitude) => {
                 // FIXME: This is incorrect for division.
                 return factorConversion(slashTermConversion(magnitude));
               }
@@ -371,7 +376,7 @@ function _parseTerm(string) {
         }
       }
     } else {
-      failureResult["consumed"] = factorResult.consumed;
+      failureResult['consumed'] = factorResult.consumed;
     }
   }
                                            
@@ -399,11 +404,11 @@ function _parseCharTerm(string, char) {
   };
   
   const charResult = _parseChar(string, char);
-  Logger.log("_parseCharTerm: charResult = %s", charResult);
+  console.log('_parseCharTerm: charResult = %s', charResult);
   
   if (charResult.success) {
     const termResult = _parseTerm(charResult.rest);
-    Logger.log("_parseCharTerm: termResult = %s", termResult);
+    console.log('_parseCharTerm: termResult = %s', termResult);
     
     const consumed = charResult.consumed + termResult.consumed;
     
@@ -415,10 +420,10 @@ function _parseCharTerm(string, char) {
         success: true
       };
     } else {
-      failureResult["consumed"] = consumed;
+      failureResult['consumed'] = consumed;
     }
   } else {
-    failureResult["consumed"] = charResult.consumed;
+    failureResult['consumed'] = charResult.consumed;
   }
 
   return failureResult;
@@ -435,17 +440,17 @@ function _parseFactor(string) {
   };
   
   const baseResult = _parseBase(string);
-  Logger.log("_parseFactor: baseResult = %s", baseResult);
+  console.log('_parseFactor: baseResult = %s', baseResult);
   
   if (baseResult.success) {
     const exponents = baseResult.result.exponents;
     
     const caretResult = _parseChar(baseResult.rest, '^');
-    Logger.log("_parseFactor: caretResult = %s", caretResult);
+    console.log('_parseFactor: caretResult = %s', caretResult);
     
     if (caretResult.success) {
       const exponentResult = _parseExponent(caretResult.rest);
-      Logger.log("_parseFactor: exponentResult = %s", exponentResult);
+      console.log('_parseFactor: exponentResult = %s', exponentResult);
       
       const consumedAroundCaret = baseResult.consumed + caretResult.consumed + exponentResult.consumed;
       
@@ -453,7 +458,7 @@ function _parseFactor(string) {
         const exponent = exponentResult.result;
         
         // TODO: Use something like `mapEntry`
-        Object.keys(exponents).forEach(function (key) {
+        Object.keys(exponents).forEach((key) => {
           exponents[key] *= exponent;
         });
         
@@ -469,13 +474,13 @@ function _parseFactor(string) {
       
         return result;
       } else {
-        failureResult["consumed"] = consumedAroundCaret;
+        failureResult['consumed'] = consumedAroundCaret;
       }
     } else {
       return baseResult;
     }
   } else {
-    failureResult["consumed"] = baseResult.consumed;
+    failureResult['consumed'] = baseResult.consumed;
   }
   
   return failureResult;
@@ -493,7 +498,7 @@ function _parseFactor(string) {
  *
  * <derived-unit> ::= rad | sr | Hz | N | Pa | J | W | C | V | F | Ω | S | Wb | T | H | °C | lm | lx | Bq | Gy | Sv | kat
  *
- * <per-unit> ::= % | ppm | ppb
+ * <per-unit> ::= % | ppm | ppb | ppt | ppq
  **/
 function _parseBase(string) {
   const failureResult = {
@@ -502,48 +507,48 @@ function _parseBase(string) {
   };
   
   const prefixes = {
-    "Y": 24,
-    "Z": 21,
-    "E": 18,
-    "P": 15,
-    "T": 12,
-    "G": 9,
-    "M": 6,
-    "k": 3,
-    "h": 2,
-    "da": 1,
-    "": 0,
-    "d": -1,
-    "c": -2,
-    "m": -3,
-    "μ": -6,
-    "n": -9,
-    "p": -12,
-    "f": -15,
-    "a": 18,
-    "z": -21,
-    "y": -24
+    'Y': 24,
+    'Z': 21,
+    'E': 18,
+    'P': 15,
+    'T': 12,
+    'G': 9,
+    'M': 6,
+    'k': 3,
+    'h': 2,
+    'da': 1,
+    '': 0,
+    'd': -1,
+    'c': -2,
+    'm': -3,
+    'μ': -6,
+    'n': -9,
+    'p': -12,
+    'f': -15,
+    'a': -18,
+    'z': -21,
+    'y': -24
   };
-  const baseUnits = [ "m", "g" , "s" , "A" , "K" , "mol" , "cd" ];
+  const baseUnits = [ 'm', 'g' , 's' , 'A' , 'K' , 'mol' , 'cd' ];
   const derivedUnits = {
-    "L": {
+    'L': {
       exponents: {
         10: -3,
         m: 3
       },
     },
-    "rad": {
+    'rad': {
       exponents: {}
     },
-    "sr": {
+    'sr': {
       exponents: {}
     },
-    "Hz": {
+    'Hz': {
       exponents: {
         s: -1
       }
     },
-    "N": {
+    'N': {
       exponents: {
         10: 3,
         g: 1,
@@ -551,7 +556,7 @@ function _parseBase(string) {
         s: -2
       }
     },
-    "Pa": {
+    'Pa': {
       exponents: {
         10: 3,
         g: 1,
@@ -559,7 +564,7 @@ function _parseBase(string) {
         s: -2
       }
     },
-    "bar": {
+    'bar': {
       exponents: {
         10: 8,
         g: 1,
@@ -567,7 +572,7 @@ function _parseBase(string) {
         s: -2
       }
     },
-    "J": {
+    'J': {
       exponents: {
         10: 3,
         g: 1,
@@ -575,7 +580,7 @@ function _parseBase(string) {
         s: -2
       }
     },
-    "W": {
+    'W': {
       exponents: {
         10: 3,
         g: 1,
@@ -583,13 +588,13 @@ function _parseBase(string) {
         s: -3
       }
     },
-    "C": {
+    'C': {
       exponents: {
         s: 1,
         A: 1
       }
     },
-    "V": {
+    'V': {
       exponents: {
         10: 3,
         g: 1,
@@ -598,7 +603,7 @@ function _parseBase(string) {
         A: -1
       }
     },
-    "F": {
+    'F': {
       exponents: {
         10: -3,
         g: -1,
@@ -607,7 +612,7 @@ function _parseBase(string) {
         A: 2
       }
     },
-    "Ω": {
+    'Ω': {
       exponents: {
         10: 3,
         g: 1,
@@ -616,7 +621,7 @@ function _parseBase(string) {
         A: -2
       }
     },
-    "S": {
+    'S': {
       exponents: {
         10: -3,
         g: -1,
@@ -625,7 +630,7 @@ function _parseBase(string) {
         A: 2
       }
     },
-    "Wb": {
+    'Wb': {
       exponents: {
         10: 3,
         g: 1,
@@ -634,7 +639,7 @@ function _parseBase(string) {
         A: -1
       }
     },
-    "T": {
+    'T': {
       exponents: {
         10: 3,
         g: 1,
@@ -642,7 +647,7 @@ function _parseBase(string) {
         A: -1
       }
     },
-    "H": {
+    'H': {
       exponents: {
         10: 3,
         g: 1,
@@ -651,79 +656,80 @@ function _parseBase(string) {
         A: -2
       }
     },
-    "°C": {
+    '°C': {
       exponents: {
         K: 1
       },
-      conversion: function (magnitude) {
+      conversion: (magnitude) => {
         return magnitude + 273.15;
       }
     },
-    "lm": { // TODO: multiply by 4π
+    'lm': { // TODO: multiply by 4π
       exponents: {
         cd: 1
       }
     },
-    "lx": { // TODO: conversion
+    'lx': { // TODO: conversion
       exponents: {
         m: -2,
         cd: 1
       }
     },
-    "Bq": { // TODO: conversion
+    'Bq': { // TODO: conversion
       exponents: {
         s: -1
       }
     },
-    "Gy": { // TODO: conversion
+    'Gy': { // TODO: conversion
       exponents: {
         m: 2,
         s: -2
       }
     },
-    "Sv": { // TODO: conversion
+    'Sv': { // TODO: conversion
       exponents: {
         m: 2,
         s: -2
       }
     },
-    "kat": {
+    'kat': {
       exponents: {
         mol: 1,
         s: -1
       }
     }
   };
-  const perUnits = [ "%", "ppm", "ppb" ];
-  const prefixlessUnits = perUnits.concat([ "°C" ]);
+  // TODO: normalize these to have no units
+  const perUnits = [ '%', 'ppm', 'ppb', 'ppt', 'ppq' ];
+  const prefixlessUnits = perUnits.concat([ '°C' ]);
 
   const units = baseUnits.concat(perUnits).concat(Object.keys(derivedUnits));
   const match = Object.keys(prefixes)
-    .filter(function (prefix) {
+    .filter((prefix) => {
       return prefix !== '' && string.indexOf(prefix) === 0;
-    }).map(function (prefix) {
-      return units.filter(function (unit) {
+    }).map((prefix) => {
+      return units.filter((unit) => {
         const prefixedUnit = prefix + unit;
 
         return prefixlessUnits.indexOf(unit) === -1 &&
             string.indexOf(prefixedUnit) === 0;
-      }).map(function (unit) {
+      }).map((unit) => {
         return {
           prefix: prefix,
           unit: unit
         };
       });
-    }).reduce(function (acc, elt) {
+    }).reduce((acc, elt) => {
       return acc.concat(elt);
-    }, []).concat(units.filter(function (unit) {
+    }, []).concat(units.filter((unit) => {
       return string.indexOf(unit) === 0;
-    }).map(function (unit) {
+    }).map((unit) => {
       return {
         prefix: '',
         unit: unit
       };
     }))
-    .sort(function (lhs, rhs) {
+    .sort((lhs, rhs) => {
       return (rhs.prefix.length + rhs.unit.length) - (lhs.prefix.length + lhs.unit.length);
     });
   
@@ -739,7 +745,7 @@ function _parseBase(string) {
         exponents: {
           10: prefixes[prefix]
         },
-        conversion: function (magnitude) {
+        conversion: (magnitude) => {
           return magnitude;
         }
       },
@@ -747,7 +753,7 @@ function _parseBase(string) {
     };
     
     if (Object.keys(derivedUnits).indexOf(unit) !== -1) {
-      Object.keys(derivedUnits[unit].exponents).forEach(function (baseUnit) {
+      Object.keys(derivedUnits[unit].exponents).forEach((baseUnit) => {
         result.result.exponents[baseUnit] = (result.result.exponents[baseUnit] || 0) + derivedUnits[unit].exponents[baseUnit];
       });
       
@@ -761,7 +767,7 @@ function _parseBase(string) {
     
     return result;
   } else {
-    failureResult["consumed"] = "";
+    failureResult['consumed'] = '';
   }
   
   return failureResult;
@@ -786,11 +792,11 @@ function _parseInteger(string) {
   };
   
   const plusResult = _parseChar(string, '+');
-  Logger.log("_parseInteger: plusResult = %s", plusResult);
+  console.log('_parseInteger: plusResult = %s', plusResult);
   
   if (plusResult.success) {
     const integerAfterPlusResult = _parseInteger(plusResult.rest);
-    Logger.log("_parseInteger: integerAfterPlusResult = %s", integerAfterPlusResult);
+    console.log('_parseInteger: integerAfterPlusResult = %s', integerAfterPlusResult);
     
     const consumedInclusiveAfterPlus = plusResult.consumed + integerAfterPlusResult.consumed;
     
@@ -802,15 +808,15 @@ function _parseInteger(string) {
         success: true
       };
     } else {
-      failureResult["consumed"] = consumedInclusiveAfterPlus;
+      failureResult['consumed'] = consumedInclusiveAfterPlus;
     }
   } else {
     const minusResult = _parseChar(string, '-');
-    Logger.log("_parseInteger: minusResult = %s", minusResult);
+    console.log('_parseInteger: minusResult = %s', minusResult);
     
     if (minusResult.success) {
       const integerAfterMinusResult = _parseInteger(minusResult.rest);
-      Logger.log("_parseInteger: integerAfterMinusResult = %s", integerAfterMinusResult);
+      console.log('_parseInteger: integerAfterMinusResult = %s', integerAfterMinusResult);
       
       const consumedInclusiveAfterMinus = minusResult.consumed + integerAfterMinusResult.consumed;
       
@@ -822,16 +828,16 @@ function _parseInteger(string) {
           success: true
         };
       } else {
-        failureResult["consumed"] = consumedInclusiveAfterMinus;
+        failureResult['consumed'] = consumedInclusiveAfterMinus;
       }
     } else {
       const digitsResult = _parseDigits(string);
-      Logger.log("_parseInteger: digitsResult = %s", digitsResult);
+      console.log('_parseInteger: digitsResult = %s', digitsResult);
       
       if (digitsResult.success) {
         return digitsResult;
       } else {
-        failureResult["consumed"] = digitsResult.consumed;
+        failureResult['consumed'] = digitsResult.consumed;
       }
     }
   }
@@ -843,6 +849,7 @@ function _parseInteger(string) {
  * <decimal> ::= + <decimal>
  *               | - <decimal>
  *               | <digits> <dot-digits>
+ *               | <digits>
  *               | <dot-digits>
  **/
 function _parseDecimal(string) {
@@ -852,11 +859,11 @@ function _parseDecimal(string) {
   };
   
   const plusResult = _parseChar(string, '+');
-  Logger.log("_parseDecimal: plusResult = %s", plusResult);
+  console.log('_parseDecimal: plusResult = %s', plusResult);
   
   if (plusResult.success) {
     const decimalAfterPlusResult = _parseDecimal(plusResult.rest);
-    Logger.log("_parseDecimal: decimalAfterPlusResult = %s", decimalAfterPlusResult);
+    console.log('_parseDecimal: decimalAfterPlusResult = %s', decimalAfterPlusResult);
     
     const consumedInclusiveAfterPlus = plusResult.consumed + decimalAfterPlusResult.consumed;
     
@@ -868,15 +875,15 @@ function _parseDecimal(string) {
         success: true
       };
     } else {
-      failureResult["consumed"] = consumedInclusiveAfterPlus;
+      failureResult['consumed'] = consumedInclusiveAfterPlus;
     }
   } else {
     const minusResult = _parseChar(string, '-');
-    Logger.log("_parseDecimal: minusResult = %s", minusResult);
+    console.log('_parseDecimal: minusResult = %s', minusResult);
     
     if (minusResult.success) {
       const decimalAfterMinusResult = _parseDecimal(minusResult.rest);
-      Logger.log("_parseDecimal: decimalAfterMinusResult = %s", decimalAfterMinusResult);
+      console.log('_parseDecimal: decimalAfterMinusResult = %s', decimalAfterMinusResult);
       
       const consumedInclusiveAfterMinus = minusResult.consumed + decimalAfterMinusResult.consumed;
       
@@ -888,14 +895,14 @@ function _parseDecimal(string) {
           success: true
         };
       } else {
-        failureResult["consumed"] = consumedInclusiveAfterMinus;
+        failureResult['consumed'] = consumedInclusiveAfterMinus;
       }
     } else {
       const digitsResult = _parseDigits(string);
-      Logger.log("_parseDecimal: digitsResult = %s", digitsResult);
+      console.log('_parseDecimal: digitsResult = %s', digitsResult);
       
       const dotDigitsResult = _parseDotDigits(digitsResult.rest);
-      Logger.log("_parseDecimal: dotDigitsResult = %s", dotDigitsResult);
+      console.log('_parseDecimal: dotDigitsResult = %s', dotDigitsResult);
       
       if (dotDigitsResult.success) {
         const consumedAroundPeriod = digitsResult.consumed + dotDigitsResult.consumed;          
@@ -925,11 +932,11 @@ function _parseDotDigits(string) {
   };
   
   const periodResult = _parseChar(string, '.');
-  Logger.log("_parseDotDigits: periodResult = %s", periodResult);
+  console.log('_parseDotDigits: periodResult = %s', periodResult);
   
   if (periodResult.success) {
     const digitsAfterPeriodResult = _parseDigits(periodResult.rest);
-    Logger.log("_parseDotDigits: digitsAfterPeriodResult = %s", digitsAfterPeriodResult);
+    console.log('_parseDotDigits: digitsAfterPeriodResult = %s', digitsAfterPeriodResult);
     
     const consumedAfterPeriod = periodResult.consumed + digitsAfterPeriodResult.consumed;          
     
@@ -940,7 +947,7 @@ function _parseDotDigits(string) {
       success: true
     };
   } else {
-    failureResult["consumed"] = periodResult.consumed;
+    failureResult['consumed'] = periodResult.consumed;
   }
   
   return failureResult;
@@ -951,7 +958,7 @@ function _parseDotDigits(string) {
  **/
 function _parseDigits(string) {
   const result = {
-    consumed: "",
+    consumed: '',
     rest: string,
     success: false
   };
@@ -964,7 +971,7 @@ function _parseDigits(string) {
   if (i !== 0) {
     result.consumed = string.substring(0, i);
     result.rest = string.substring(i);
-    result["result"] = parseInt(result.consumed);
+    result['result'] = parseInt(result.consumed);
     result.success = true;
   }
   
@@ -980,9 +987,29 @@ function _parseChar(string, char) {
     };
   } else {
     return  {
-      consumed: "",
+      consumed: '',
       rest: string,
       success: false
     };
   }
+}
+
+module.exports = {
+  _normalizeUnits: _normalizeUnits,
+  _parseAsterixTerm: _parseAsterixTerm,
+  _parseBase: _parseBase,
+  _parseChar: _parseChar,
+  _parseCharTerm: _parseCharTerm,
+  _parseDecimal: _parseDecimal,
+  _parseDigits: _parseDigits,
+  _parseDotDigits: _parseDotDigits,
+  _parseExponent: _parseExponent,
+  _parseExpression: _parseExpression,
+  _parseFactor: _parseFactor,
+  _parseInteger: _parseInteger,
+  _parseMagnitude: _parseMagnitude,
+  _parseSignificand: _parseSignificand,
+  _parseSlashTerm: _parseSlashTerm,
+  _parseTerm: _parseTerm,
+  normalizeUnits: normalizeUnits
 }

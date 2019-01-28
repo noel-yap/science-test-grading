@@ -16,7 +16,7 @@ function _getGradingProperties(spreadsheet) {
 
   const properties = gradingPropertiesRange === null
     ?  defaultValues
-    : gradingPropertiesRange.getValues().reduce(function (accum, elt) {
+    : gradingPropertiesRange.getValues().reduce((accum, elt) => {
       accum[elt[0]] = elt[2];
 
       return accum;

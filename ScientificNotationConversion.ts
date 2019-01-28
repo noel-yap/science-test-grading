@@ -1,21 +1,17 @@
 /**
- * Converts a string similar to "23.456*10^789" to a number.
+ * Converts a string similar to "234.567*10^89" to a number.
  **/
 function sciToNum(formula) {
-  Logger.log("sciToNum: %s, %s", formula, Array.prototype.slice.call(arguments));
+  console.log("sciToNum: %s, %s", formula, Array.prototype.slice.call(arguments));
   return _throttle(_sciToNum, [ formula ]);
 }
 
 function _sciToNum(formula) {
-  Logger.log("_sciToNum: formula = %s", formula);
+  console.log("_sciToNum: formula = %s", formula);
   formula = formula.toString();
-  Logger.log("_sciToNum: formula = %s", formula);
-  
-  // Strip leading "=" if there
-  if (formula.charAt(0) === '=') {
-    formula = formula.substring(1);
-  }
-  
+  console.log("_sciToNum: formula = %s", formula);
+
+  // TODO: Is this really needed?
   const indexOfPercent = formula.indexOf('%');
   if (indexOfPercent !== -1) {
     formula = formula.substring(0, indexOfPercent);
@@ -23,7 +19,7 @@ function _sciToNum(formula) {
   
   formula = formula.replace(/\*10\^([-+0-9]+)/, "E$1");
   formula = formula.replace(/([-+0-9]+)\^([-+0-9]+)/, "Math.pow($1, $2)");
-  Logger.log("_sciToNum: formula = %s", formula);
+  console.log("_sciToNum: formula = %s", formula);
   
   return eval(formula);
 }
@@ -40,3 +36,8 @@ function _numToSci(number, numberOfSignificantFigures) {
   
   return significand.toString().concat("*10^", exponent.toString());
 }
+
+module.exports = {
+  _sciToNum: _sciToNum,
+  _numToSci: _numToSci
+};

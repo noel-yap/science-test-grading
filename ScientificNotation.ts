@@ -3,7 +3,7 @@
  **/
 function sciToNum(formula) {
   console.log(`sciToNum: ${formula}, ${Array.prototype.slice.call(arguments)}`);
-  return _throttle(_sciToNum, [ formula ]);
+  return _throttle(_sciToNum, [formula]);
 }
 
 function _sciToNum(formula) {

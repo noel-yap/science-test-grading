@@ -37,7 +37,7 @@ function grade(points, observed, expected) {
   console.log(`grade: expected = ${expected}`);
   
   if (!Array.isArray(observed)) {
-    observed = [[ observed ]];
+    observed = [[observed]];
   }
 
   return observed.map(function (row) {
@@ -59,7 +59,7 @@ function grade(points, observed, expected) {
         return (accum[1] === undefined || accum[1].toString().indexOf('Error:') === 0 || elt[0] > accum[0])
             ? elt
             : accum;
-      }, [ -points, undefined ]);
+      }, [-points, undefined]);
     });
   }).reduce(function (accum, elt) {
     return accum.concat(elt);
@@ -201,25 +201,25 @@ function _grade(gradingProperties, points, observed, expected) {
 
   const magnitudePortion = gradingProperties['magnitude-portion'];
   const magnitudeCredit = __Number__._isNaN(observedNormalizedMagnitude)
-      ? [[ gradingProperties['missing-magnitude'], 'No magnitude.' ]]
+      ? [[gradingProperties['missing-magnitude'], 'No magnitude.']]
       : ((correctOrderOfMagnitude
-          ? [[ 0.0, undefined ]]
-          : [[ gradingProperties['incorrect-order-of-magnitude'], 'Incorrect order of magnitude.' ]])
+          ? [[0.0, undefined]]
+          : [[gradingProperties['incorrect-order-of-magnitude'], 'Incorrect order of magnitude.']])
           .concat(withinAdjustedExpectedRange
               ? (significantFiguresCmp < 0
-                  ? [[ gradingProperties['too-few-significant-figures'], 'Too few significant figures.' ]]
+                  ? [[gradingProperties['too-few-significant-figures'], 'Too few significant figures.']]
                   : significantFiguresCmp > 0
-                  ? [[ gradingProperties['too-many-significant-figures'], 'Too many significant figures.' ]]
-                  : [[ 0.0, undefined ]])
+                  ? [[gradingProperties['too-many-significant-figures'], 'Too many significant figures.']]
+                  : [[0.0, undefined]])
               : closeToAdjustedExpected
-              ? [[ gradingProperties['order-adjusted-magnitude-off-by-less-than-one-percent'], 'Magnitude close but not exactly correct.' ]]
-              : [[ gradingProperties['order-adjusted-magnitude-off-by-more-than-one-percent'], 'Incorrect order-of-magnitude-adjusted magnitude.' ]]));
+              ? [[gradingProperties['order-adjusted-magnitude-off-by-less-than-one-percent'], 'Magnitude close but not exactly correct.']]
+              : [[gradingProperties['order-adjusted-magnitude-off-by-more-than-one-percent'], 'Incorrect order-of-magnitude-adjusted magnitude.']]));
   const unitsPortion = gradingProperties['units-portion'];
   const unitsCredit = observedNormalizedUnits === '' && expectedNormalizedUnits !== ''
-      ? [[ gradingProperties['missing-units'], 'No units.' ]]
+      ? [[gradingProperties['missing-units'], 'No units.']]
       : observedNormalizedUnits !== expectedNormalizedUnits
-      ? [[ gradingProperties['incorrect-units'], 'Incorrect units.' ]]
-      : [[ 0.0, undefined ]];
+      ? [[gradingProperties['incorrect-units'], 'Incorrect units.']]
+      : [[0.0, undefined]];
   
   console.log(`_grade: magnitudeCredit = ${magnitudeCredit}`);
   console.log(`_grade: unitsCredit = ${unitsCredit}`);
@@ -232,8 +232,8 @@ function _grade(gradingProperties, points, observed, expected) {
       .filter(function (elt) {
         return elt[1] !== undefined;
       }).reduce(function (accum, elt) {
-        return [ accum[0] + elt[0], [ accum[1], elt[1] ].join(' ') ];
-      }, [ 0.0, '' ]);
+        return [accum[0] + elt[0], [ accum[1], elt[1] ].join(' ')];
+      }, [0.0, '']);
   console.log(`_grade: result = ${result}`);
   result[0] = points
       - points

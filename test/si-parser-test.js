@@ -893,8 +893,8 @@ test('_parseFactor should succeed with both base and exponent', t => {
   });
 });
 
-test('_parseCharTerm should fail with nothing after char', t => {
-  const observed = SIParser._parseCharTerm('?', '?');
+test('_parseCharUnits should fail with nothing after char', t => {
+  const observed = SIParser._parseCharUnits('?', '?');
 
   t.deepEqual(observed, {
     consumed: '?',
@@ -903,8 +903,8 @@ test('_parseCharTerm should fail with nothing after char', t => {
   });
 });
 
-test('_parseCharTerm should pass with term after char', t => {
-  const observed = SIParser._parseCharTerm('?g', '?');
+test('_parseCharUnits should pass with term after char', t => {
+  const observed = SIParser._parseCharUnits('?g', '?');
 
   t.deepEqual(observed, {
     consumed: '?g',
@@ -914,23 +914,6 @@ test('_parseCharTerm should pass with term after char', t => {
       exponents: {
         10: 0,
         g: 1
-      }
-    },
-    success: true
-  });
-});
-
-test('_parseTerm should parse factor only', t => {
-  const observed = SIParser._parseTerm('K');
-
-  t.deepEqual(observed, {
-    consumed: 'K',
-    rest: '',
-    result: {
-      conversion: observed.result.conversion,
-      exponents: {
-        10: 0,
-        K: 1
       }
     },
     success: true
@@ -973,7 +956,7 @@ test('_parseTerm should parse factor divided by factor', t => {
   });
 });
 
-test('_parseTerm should recurse over multiplication operators', t => {
+test('_parseTerm should parse consecutive multiplication operators', t => {
   const observed = SIParser._parseTerm('g*m*s');
 
   t.deepEqual(observed, {
@@ -992,8 +975,27 @@ test('_parseTerm should recurse over multiplication operators', t => {
   });
 });
 
-test('_parseTerm should fail with nothing after open parenthesis', t => {
-  const observed = SIParser._parseTerm('(');
+test('_parseTerm should parse consecutive division operators', t => {
+  const observed = SIParser._parseTerm('g/m/s');
+
+  t.deepEqual(observed, {
+    consumed: 'g/m/s',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: 0,
+        g: 1,
+        m: -1,
+        s: -1
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseUnits should fail with nothing after open parenthesis', t => {
+  const observed = SIParser._parseUnits('(');
 
   t.deepEqual(observed, {
     consumed: '(',
@@ -1002,8 +1004,8 @@ test('_parseTerm should fail with nothing after open parenthesis', t => {
   });
 });
 
-test('_parseTerm should fail with unbalanced parentheses', t => {
-  const observed = SIParser._parseTerm('(A');
+test('_parseUnits should fail with unbalanced parentheses', t => {
+  const observed = SIParser._parseUnits('(A');
 
   t.deepEqual(observed, {
     consumed: '(A',
@@ -1012,8 +1014,8 @@ test('_parseTerm should fail with unbalanced parentheses', t => {
   });
 });
 
-test('_parseTerm should parse parentheses', t => {
-  const observed = SIParser._parseTerm('(A)');
+test('_parseUnits should parse parentheses', t => {
+  const observed = SIParser._parseUnits('(A)');
 
   t.deepEqual(observed, {
     consumed: '(A)',
@@ -1029,8 +1031,8 @@ test('_parseTerm should parse parentheses', t => {
   });
 });
 
-test('_parseTerm should recurse through parentheses', t => {
-  const observed = SIParser._parseTerm('((A))');
+test('_parseUnits should recurse through parentheses', t => {
+  const observed = SIParser._parseUnits('((A))');
 
   t.deepEqual(observed, {
     consumed: '((A))',
@@ -1040,6 +1042,23 @@ test('_parseTerm should recurse through parentheses', t => {
       exponents: {
         10: 0,
         A: 1
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseUnits should parse factor only', t => {
+  const observed = SIParser._parseUnits('K');
+
+  t.deepEqual(observed, {
+    consumed: 'K',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: 0,
+        K: 1
       }
     },
     success: true

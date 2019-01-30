@@ -213,7 +213,7 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
   const unprotectedRanges = _sequence(1, width)
       .filter(function (c) {
         return gradersEntriesSheet.getRange(4, c).getValue().indexOf('Answer') !== -1;
-      }).concat([ 1 ])
+      }).concat([1])
       .map(function (c) {
         return gradersEntriesSheet.getRange(6, c, height - 5, 1);
       });
@@ -227,11 +227,11 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
         .map(function (r) {
           const unprotectedCell = unprotectedRange.getCell(r, 1);
           
-          return [ SpreadsheetApp.newDataValidation()
+          return [SpreadsheetApp.newDataValidation()
               .requireFormulaSatisfied(`=istext(${unprotectedCell.getA1Notation()})`)
               .setAllowInvalid(false)
               .setHelpText('Provided answers must be text (ie starting with `\'`).')
-              .build() ];
+              .build()];
         });
     
     unprotectedRange.setDataValidations(validationRules);

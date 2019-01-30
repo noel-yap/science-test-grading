@@ -5,23 +5,25 @@
  * BNF grammar:
  *
  * <expression> ::= <magnitude> <term>
- *                  | <magnitude> <asterix-term>
- *                  | <magnitude> <slash-term>
+ *                  | <magnitude> * <term>
+ *                  | <magnitude> / <term>
  *                  | <magnitude>
+ *                  | <term>
  *
  * <magnitude> ::= <significand> *10^ <exponent>
  *
  * <significand> ::= <decimal>
  *
- * <term> ::= ( <term> )
- *            | <factor> <asterix-term>
- *            | <factor> <slash-term>
- *            | <factor>
+ * <units> ::= ( <term> )
+ *             | <factor>
  *
+ * <term> ::= <units>
+ *            | <units> <asterix-units>...
+ *            | <units> <slash-units>...
  *
- * <asterix-term> ::= * <term>
+ * <asterix-units> ::= * <units>
  *
- * <slash-term> ::= / <term>
+ * <slash-units> ::= / <units>
  *
  * <factor> ::= <base>
  *              | <base> ^ <exponent>
@@ -130,8 +132,8 @@ function _normalizeUnits(string) {
 
 /**
  * <expression> ::= <magnitude> <term>
- *                  | <magnitude> <asterix-term>
- *                  | <magnitude> <slash-term> // FIXME: need to parse right-to-left
+ *                  | <magnitude> * <term>
+ *                  | <magnitude> / <term>
  *                  | <magnitude>
  *                  | <term>
  **/
@@ -273,30 +275,28 @@ function _parseSignificand(string) {
 }
 
 /**
- * <term> ::= ( <term> )
- *            | <factor> <asterix-term>
- *            | <factor> <slash-term> // FIXME: need to parse right-to-left
- *            | <factor>
- **/
-function _parseTerm(string) {
+ * <units> ::= ( <term> )
+ *             | <factor>
+ */
+function _parseUnits(string) {
   const failureResult = {
     rest: string,
     success: false
   };
-  
+
   const openParenthesisResult = _parseChar(string, '(');
-  console.log(`_parseTerm: openParenthesisResult = ${JSON.stringify(openParenthesisResult)}`);
-  
+  console.log(`_parseUnits: openParenthesisResult = ${JSON.stringify(openParenthesisResult)}`);
+
   if (openParenthesisResult.success) {
     const termBetweenParenthesesResult = _parseTerm(openParenthesisResult.rest);
-    console.log(`_parseTerm: termBetweenParenthesesResult = ${JSON.stringify(termBetweenParenthesesResult)}`);
-    
+    console.log(`_parseUnits: termBetweenParenthesesResult = ${JSON.stringify(termBetweenParenthesesResult)}`);
+
     if (termBetweenParenthesesResult.success) {
       const closeParenthesisResult = _parseChar(termBetweenParenthesesResult.rest, ')');
-      console.log(`_parseTerm: closeParenthesisResult = ${JSON.stringify(closeParenthesisResult)}`);
-      
+      console.log(`_parseUnits: closeParenthesisResult = ${JSON.stringify(closeParenthesisResult)}`);
+
       const consumedInclusiveBetweenParentheses = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed + closeParenthesisResult.consumed;
-      
+
       if (closeParenthesisResult.success) {
         return {
           consumed: consumedInclusiveBetweenParentheses,
@@ -312,117 +312,145 @@ function _parseTerm(string) {
     }
   } else {
     const factorResult = _parseFactor(string);
-    console.log(`_parseTerm: factorResult = ${JSON.stringify(factorResult)}`);
-    
+    console.log(`_parseUnits: factorResult = ${JSON.stringify(factorResult)}`);
+
     if (factorResult.success) {
-      const factorExponents = factorResult.result.exponents;
-      const factorConversion = factorResult.result.conversion;
-      
-      const asterixTermResult = _parseAsterixTerm(factorResult.rest);
-      console.log(`_parseTerm: asterixTermResult = ${JSON.stringify(asterixTermResult)}`);
-      
-      const consumedAroundAsterix = factorResult.consumed + asterixTermResult.consumed;
-        
-      if (asterixTermResult.success) {
-        const asterixTermExponents = asterixTermResult.result.exponents;
-        const asterixTermConversion = asterixTermResult.result.conversion;
-        
-        const exponentsAfterAsterix = Object.keys(asterixTermExponents).reduce((accum, elt) => {
-          console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, asterixTermExponents[${elt}] = ${asterixTermExponents[elt]}`);
-
-          accum[elt] = (accum[elt] || 0) + asterixTermExponents[elt];
-
-          return accum;
-        }, factorExponents);
-
-
-        return {
-          consumed: consumedAroundAsterix,
-          rest: asterixTermResult.rest,
-          result: {
-            exponents: exponentsAfterAsterix,
-            conversion: (magnitude) => {
-              return factorConversion(asterixTermConversion(magnitude));
-            }
-          },
-          success: true
-        };
-      } else {
-        const slashTermResult = _parseSlashTerm(factorResult.rest);
-        console.log(`_parseTerm: slashTermResult = ${JSON.stringify(slashTermResult)}`);
-        
-        const consumedAroundSlash = factorResult.consumed + slashTermResult.consumed;
-          
-        if (slashTermResult.success) {
-          const slashTermExponents = slashTermResult.result.exponents;
-          const slashTermConversion = slashTermResult.result.conversion;
-          
-          const exponentsAfterSlash = Object.keys(slashTermExponents).reduce((accum, elt) => {
-            console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, slashTermExponents[${elt}] = ${slashTermExponents[elt]}`);
-
-            accum[elt] = (accum[elt] || 0) - slashTermExponents[elt];
-
-            return accum;
-          }, factorExponents);
-
-          return {
-            consumed: consumedAroundSlash,
-            rest: slashTermResult.rest,
-            result: {
-              exponents: exponentsAfterSlash,
-              conversion: (magnitude) => {
-                // FIXME: This is incorrect for division.
-                return factorConversion(slashTermConversion(magnitude));
-              }
-            },
-            success: true
-          };
-        } else {
-          return factorResult;
-        }
-      }
+      return factorResult;
     } else {
       failureResult['consumed'] = factorResult.consumed;
     }
+  }
+
+  return failureResult;
+}
+
+/**
+ * <term> ::= <units> <asterix-units>
+ *            | <units> <slash-units>
+ **/
+function _parseTerm(string) {
+  const failureResult = {
+    rest: string,
+    success: false
+  };
+  
+  const unitsResult = _parseUnits(string);
+  console.log(`_parseTerm: unitsResult = ${JSON.stringify(unitsResult)}`);
+  
+  if (unitsResult.success) {
+    const result = unitsResult;
+
+    const resultExponents = result.result.exponents;
+    const resultConversion = result.result.conversion;
+
+    let rest = result.rest;
+    while (rest.charAt(0) === '*' || rest.charAt(0) === '/') {
+      const asterixUnitsResult = _parseAsterixUnits(rest);
+      console.log(`_parseTerm: asterixUnitsResult = ${JSON.stringify(asterixUnitsResult)}`);
+
+      const consumedAroundAsterix = result.consumed + asterixUnitsResult.consumed;
+
+      if (asterixUnitsResult.success) {
+        rest = asterixUnitsResult.rest;
+
+        const asterixUnitsExponents = asterixUnitsResult.result.exponents;
+        const asterixUnitsConversion = asterixUnitsResult.result.conversion;
+
+        const exponentsAfterAsterix = Object.keys(asterixUnitsExponents).reduce((accum, elt) => {
+          console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, asterixTermExponents[${elt}] = ${asterixUnitsExponents[elt]}`);
+
+          accum[elt] = (accum[elt] || 0) + asterixUnitsExponents[elt];
+
+          return accum;
+        }, resultExponents);
+
+        result.consumed = consumedAroundAsterix;
+        result.rest = rest;
+        result.result = {
+          exponents: exponentsAfterAsterix,
+          conversion: (magnitude) => {
+            return resultConversion(asterixUnitsConversion(magnitude));
+          }
+        };
+        result.success = true;
+      } else {
+        const slashUnitsResult = _parseSlashUnits(rest);
+        console.log(`_parseTerm: slashUnitsResult = ${JSON.stringify(slashUnitsResult)}`);
+
+        const consumedAroundSlash = result.consumed + slashUnitsResult.consumed;
+
+        if (slashUnitsResult.success) {
+          rest = slashUnitsResult.rest;
+
+          const slashUnitsExponents = slashUnitsResult.result.exponents;
+          const slashUnitsConversion = slashUnitsResult.result.conversion;
+
+          const exponentsAfterSlash = Object.keys(slashUnitsExponents).reduce((accum, elt) => {
+            console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, slashTermExponents[${elt}] = ${slashUnitsExponents[elt]}`);
+
+            accum[elt] = (accum[elt] || 0) - slashUnitsExponents[elt];
+
+            return accum;
+          }, resultExponents);
+
+          result.consumed = consumedAroundSlash;
+          result.rest = rest;
+          result.result = {
+            exponents: exponentsAfterSlash,
+            conversion: (magnitude) => {
+              // FIXME: This is incorrect for division.
+              return resultConversion(slashUnitsConversion(magnitude));
+            }
+          };
+          result.success = true;
+        } else {
+          result.success = false;
+        }
+      }
+    }
+
+    return result;
+  } else {
+    failureResult['consumed'] = unitsResult.consumed;
   }
                                            
   return failureResult;
 }
 
 /**
- * <asterix-term> ::= * <term>
+ * <asterix-units> ::= * <units>
  **/
-function _parseAsterixTerm(string) {
-  return _parseCharTerm(string, '*');
+function _parseAsterixUnits(string) {
+  return _parseCharUnits(string, '*');
 }
 
 /**
- * <slash-term> ::= / <term>
+ * <slash-units> ::= / <units>
  **/
-function _parseSlashTerm(string) {
-  return _parseCharTerm(string, '/');
+function _parseSlashUnits(string) {
+  return _parseCharUnits(string, '/');
 }
 
-function _parseCharTerm(string, char) {
+function _parseCharUnits(string, char) {
   const failureResult = {
     rest: string,
     success: false
   };
   
   const charResult = _parseChar(string, char);
-  console.log(`_parseCharTerm: charResult = ${JSON.stringify(charResult)}`);
+  console.log(`_parseCharUnits: charResult = ${JSON.stringify(charResult)}`);
   
   if (charResult.success) {
-    const termResult = _parseTerm(charResult.rest);
-    console.log(`_parseCharTerm: termResult = ${JSON.stringify(termResult)}`);
+    const unitsResult = _parseUnits(charResult.rest);
+    console.log(`_parseCharUnits: unitsResult = ${JSON.stringify(unitsResult)}`);
     
-    const consumed = charResult.consumed + termResult.consumed;
+    const consumed = charResult.consumed + unitsResult.consumed;
     
-    if (termResult.success) {
+    if (unitsResult.success) {
       return {
         consumed: consumed,
-        rest: termResult.rest,
-        result: termResult.result,
+        rest: unitsResult.rest,
+        result: unitsResult.result,
         success: true
       };
     } else {
@@ -533,7 +561,7 @@ function _parseBase(string) {
     'z': -21,
     'y': -24
   };
-  const baseUnits = [ 'm', 'g' , 's' , 'A' , 'K' , 'mol' , 'cd' ];
+  const baseUnits = ['m', 'g' , 's' , 'A' , 'K' , 'mol' , 'cd'];
   const derivedUnits = {
     'L': {
       exponents: {
@@ -992,7 +1020,7 @@ function _parseDigits(string) {
     success: false
   };
   
-  var i;
+  let i;
   for (i = 0; '0' <= string.charAt(i) && string.charAt(i) <= '9'; ++i);
 
   if (i !== 0) {
@@ -1027,10 +1055,9 @@ function _parseChar(string, char) {
 
 module.exports = {
   _normalizeUnits: _normalizeUnits,
-  _parseAsterixTerm: _parseAsterixTerm,
   _parseBase: _parseBase,
   _parseChar: _parseChar,
-  _parseCharTerm: _parseCharTerm,
+  _parseCharUnits: _parseCharUnits,
   _parseDecimal: _parseDecimal,
   _parseDigits: _parseDigits,
   _parseDotDigits: _parseDotDigits,
@@ -1040,7 +1067,7 @@ module.exports = {
   _parseInteger: _parseInteger,
   _parseMagnitude: _parseMagnitude,
   _parseSignificand: _parseSignificand,
-  _parseSlashTerm: _parseSlashTerm,
   _parseTerm: _parseTerm,
+  _parseUnits: _parseUnits,
   normalizeUnits: normalizeUnits
 }

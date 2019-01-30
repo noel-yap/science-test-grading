@@ -345,34 +345,41 @@ function _parseTerm(string) {
 
     let rest = result.rest;
     while (rest.charAt(0) === '*' || rest.charAt(0) === '/') {
-      const asterixUnitsResult = _parseAsterixUnits(rest);
-      console.log(`_parseTerm: asterixUnitsResult = ${JSON.stringify(asterixUnitsResult)}`);
+      if (rest.charAt(0) === '*') {
+        const asterixUnitsResult = _parseAsterixUnits(rest);
+        console.log(`_parseTerm: asterixUnitsResult = ${JSON.stringify(asterixUnitsResult)}`);
 
-      const consumedAroundAsterix = result.consumed + asterixUnitsResult.consumed;
+        const consumedAroundAsterix = result.consumed + asterixUnitsResult.consumed;
 
-      if (asterixUnitsResult.success) {
-        rest = asterixUnitsResult.rest;
+        if (asterixUnitsResult.success) {
+          rest = asterixUnitsResult.rest;
 
-        const asterixUnitsExponents = asterixUnitsResult.result.exponents;
-        const asterixUnitsConversion = asterixUnitsResult.result.conversion;
+          const asterixUnitsExponents = asterixUnitsResult.result.exponents;
+          const asterixUnitsConversion = asterixUnitsResult.result.conversion;
 
-        const exponentsAfterAsterix = Object.keys(asterixUnitsExponents).reduce((accum, elt) => {
-          console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, asterixTermExponents[${elt}] = ${asterixUnitsExponents[elt]}`);
+          const exponentsAfterAsterix = Object.keys(asterixUnitsExponents).reduce((accum, elt) => {
+            console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, asterixTermExponents[${elt}] = ${asterixUnitsExponents[elt]}`);
 
-          accum[elt] = (accum[elt] || 0) + asterixUnitsExponents[elt];
+            accum[elt] = (accum[elt] || 0) + asterixUnitsExponents[elt];
 
-          return accum;
-        }, resultExponents);
+            return accum;
+          }, resultExponents);
 
-        result.consumed = consumedAroundAsterix;
-        result.rest = rest;
-        result.result = {
-          exponents: exponentsAfterAsterix,
-          conversion: (magnitude) => {
-            return resultConversion(asterixUnitsConversion(magnitude));
-          }
-        };
-        result.success = true;
+          result.consumed = consumedAroundAsterix;
+          result.rest = rest;
+          result.result = {
+            exponents: exponentsAfterAsterix,
+            conversion: (magnitude) => {
+              return resultConversion(asterixUnitsConversion(magnitude));
+            }
+          };
+          result.success = true;
+        } else {
+          failureResult.consumed = consumedAroundAsterix;
+          failureResult.rest = asterixUnitsResult.rest;
+
+          return failureResult;
+        }
       } else {
         const slashUnitsResult = _parseSlashUnits(rest);
         console.log(`_parseTerm: slashUnitsResult = ${JSON.stringify(slashUnitsResult)}`);
@@ -404,7 +411,10 @@ function _parseTerm(string) {
           };
           result.success = true;
         } else {
-          result.success = false;
+          failureResult.consumed = consumedAroundSlash;
+          failureResult.rest = slashUnitsResult.rest;
+
+          return failureResult;
         }
       }
     }

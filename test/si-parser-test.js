@@ -994,6 +994,26 @@ test('_parseTerm should parse consecutive division operators', t => {
   });
 });
 
+test('_parseTerm should fail with failed multiplier', t => {
+  const observed = SIParser._parseTerm('%*1ppm');
+
+  t.deepEqual(observed, {
+    consumed: '%*',
+    rest: '*1ppm',
+    success: false
+  });
+});
+
+test('_parseTerm should fail with failed divisor', t => {
+  const observed = SIParser._parseTerm('%/1ppm');
+
+  t.deepEqual(observed, {
+    consumed: '%/',
+    rest: '/1ppm',
+    success: false
+  });
+});
+
 test('_parseUnits should fail with nothing after open parenthesis', t => {
   const observed = SIParser._parseUnits('(');
 

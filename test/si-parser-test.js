@@ -411,6 +411,86 @@ test('_parseBase should parse Watts', t => {
   });
 });
 
+test('_parseBase should parse percent', t => {
+  const observed = SIParser._parseBase('%');
+
+  t.deepEqual(observed, {
+    consumed: '%',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: -2
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseBase should parse parts-per-million', t => {
+  const observed = SIParser._parseBase('ppm');
+
+  t.deepEqual(observed, {
+    consumed: 'ppm',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: -6
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseBase should parse parts-per-billion', t => {
+  const observed = SIParser._parseBase('ppb');
+
+  t.deepEqual(observed, {
+    consumed: 'ppb',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: -9
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseBase should parse parts-per-trillion', t => {
+  const observed = SIParser._parseBase('ppt');
+
+  t.deepEqual(observed, {
+    consumed: 'ppt',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: -12
+      }
+    },
+    success: true
+  });
+});
+
+test('_parseBase should parse parts-per-quadrillion', t => {
+  const observed = SIParser._parseBase('ppq');
+
+  t.deepEqual(observed, {
+    consumed: 'ppq',
+    rest: '',
+    result: {
+      conversion: observed.result.conversion,
+      exponents: {
+        10: -15
+      }
+    },
+    success: true
+  });
+});
+
 test('_parseBase should parse Celcius', t => {
   const observed = SIParser._parseBase('°C');
 
@@ -894,10 +974,10 @@ test('_parseTerm should parse factor divided by factor', t => {
 });
 
 test('_parseTerm should recurse over multiplication operators', t => {
-  const observed = SIParser._parseTerm('g*m/s');
+  const observed = SIParser._parseTerm('g*m*s');
 
   t.deepEqual(observed, {
-    consumed: 'g*m/s',
+    consumed: 'g*m*s',
     rest: '',
     result: {
       conversion: observed.result.conversion,
@@ -905,14 +985,14 @@ test('_parseTerm should recurse over multiplication operators', t => {
         10: 0,
         g: 1,
         m: 1,
-        s: -1
+        s: 1
       }
     },
     success: true
   });
 });
 
-test('_parseTerm should fail with nothing after parenthesis', t => {
+test('_parseTerm should fail with nothing after open parenthesis', t => {
   const observed = SIParser._parseTerm('(');
 
   t.deepEqual(observed, {

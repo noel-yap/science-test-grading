@@ -37,8 +37,6 @@
  *
  * <derived-unit> ::= rad | sr | Hz | N | Pa | J | W | C | V | F | Ω | S | Wb | T | H | °C | lm | lx | Bq | Gy | Sv | kat
  *
- * <per-unit> ::= % | ppm | ppb
- *
  * <exponent> ::= <integer>
  *
  * <integer> ::= + <digits>
@@ -61,7 +59,7 @@ function normalizeUnits(string) {
 
     return magnitudeString === '' && unitsString === ''
         ? ''
-        : magnitudeString + (unitsString === '%' || unitsString === '' ? '' : ' ') + unitsString;
+        : `${magnitudeString} ${unitsString}`;
   } else {
     throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${string}'. Are you sure metric units are being used?`);
   }
@@ -98,7 +96,7 @@ function _normalizeUnits(string) {
     const magnitude = expressionResult.result.magnitude;
     const exponents = expressionResult.result.exponents;
 
-    const units = [ '10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol', '%', 'ppm', 'ppb', 'ppt', 'ppq' ].filter((unit) => {
+    const units = ['10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol'].filter((unit) => {
       return exponents.hasOwnProperty(unit);
     });
     
@@ -133,7 +131,7 @@ function _normalizeUnits(string) {
 /**
  * <expression> ::= <magnitude> <term>
  *                  | <magnitude> <asterix-term>
- *                  | <magnitude> <slash-term>
+ *                  | <magnitude> <slash-term> // FIXME: need to parse right-to-left
  *                  | <magnitude>
  *                  | <term>
  **/
@@ -163,12 +161,13 @@ function _parseExpression(string) {
       const consumed = magnitudeResult.consumed + operator + termResult.consumed;
       
       if (termResult.success) {
-        const exponents = termResult.result.exponents;
-        if (operator === '/') {
-          Object.keys(exponents).forEach((key) => {
-            exponents[key] = -exponents[key];
-          })
-        }
+        const exponents = operator === '/'
+            ? Object.keys(termResult.result.exponents).reduce((accum, elt) => {
+              accum[elt] = -accum[elt];
+
+              return accum;
+            }, termResult.result.exponents)
+            : termResult.result.exponents;
         if (magnitudeResult.success) {
           exponents['10'] += magnitudeResult.result.exponent;
         }
@@ -276,7 +275,7 @@ function _parseSignificand(string) {
 /**
  * <term> ::= ( <term> )
  *            | <factor> <asterix-term>
- *            | <factor> <slash-term>
+ *            | <factor> <slash-term> // FIXME: need to parse right-to-left
  *            | <factor>
  **/
 function _parseTerm(string) {
@@ -328,11 +327,15 @@ function _parseTerm(string) {
         const asterixTermExponents = asterixTermResult.result.exponents;
         const asterixTermConversion = asterixTermResult.result.conversion;
         
-        const exponentsAfterAsterix = factorExponents;
-        Object.keys(asterixTermExponents).forEach((termKey) => {
-          exponentsAfterAsterix[termKey] = (exponentsAfterAsterix[termKey] || 0) + asterixTermExponents[termKey];
-        })
-        
+        const exponentsAfterAsterix = Object.keys(asterixTermExponents).reduce((accum, elt) => {
+          console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, asterixTermExponents[${elt}] = ${asterixTermExponents[elt]}`);
+
+          accum[elt] = (accum[elt] || 0) + asterixTermExponents[elt];
+
+          return accum;
+        }, factorExponents);
+
+
         return {
           consumed: consumedAroundAsterix,
           rest: asterixTermResult.rest,
@@ -354,11 +357,14 @@ function _parseTerm(string) {
           const slashTermExponents = slashTermResult.result.exponents;
           const slashTermConversion = slashTermResult.result.conversion;
           
-          const exponentsAfterSlash = factorExponents;
-          Object.keys(slashTermExponents).forEach((termKey) => {
-            exponentsAfterSlash[termKey] = (exponentsAfterSlash[termKey] || 0) - slashTermExponents[termKey];
-          })
-            
+          const exponentsAfterSlash = Object.keys(slashTermExponents).reduce((accum, elt) => {
+            console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, slashTermExponents[${elt}] = ${slashTermExponents[elt]}`);
+
+            accum[elt] = (accum[elt] || 0) - slashTermExponents[elt];
+
+            return accum;
+          }, factorExponents);
+
           return {
             consumed: consumedAroundSlash,
             rest: slashTermResult.rest,
@@ -443,7 +449,7 @@ function _parseFactor(string) {
   console.log(`parseFactor: baseResult = ${JSON.stringify(baseResult)}`);
   
   if (baseResult.success) {
-    const exponents = baseResult.result.exponents;
+    const baseResultExponents = baseResult.result.exponents;
     
     const caretResult = _parseChar(baseResult.rest, '^');
     console.log(`_parseFactor: caretResult = ${JSON.stringify(caretResult)}`);
@@ -456,11 +462,11 @@ function _parseFactor(string) {
       
       if (exponentResult.success) {
         const exponent = exponentResult.result;
-        
-        // TODO: Use something like `mapEntry`
-        Object.keys(exponents).forEach((key) => {
-          exponents[key] *= exponent;
-        });
+        const exponents = Object.keys(baseResultExponents).reduce((accum, elt) => {
+          accum[elt] *= exponent;
+
+          return accum;
+        }, baseResultExponents);
         
         const result = {
           consumed: consumedAroundCaret,
@@ -496,9 +502,7 @@ function _parseFactor(string) {
  *
  * <base-unit> ::= m | g | s | A | K | mol | cd
  *
- * <derived-unit> ::= rad | sr | Hz | N | Pa | J | W | C | V | F | Ω | S | Wb | T | H | °C | lm | lx | Bq | Gy | Sv | kat
- *
- * <per-unit> ::= % | ppm | ppb | ppt | ppq
+ * <derived-unit> ::= rad | sr | Hz | N | Pa | J | W | C | V | F | Ω | S | Wb | T | H | °C | lm | lx | Bq | Gy | Sv | kat | % | ppm | ppb | ppt | ppq
  **/
 function _parseBase(string) {
   const failureResult = {
@@ -697,13 +701,36 @@ function _parseBase(string) {
         mol: 1,
         s: -1
       }
+    },
+    '%': {
+      exponents: {
+        10: -2
+      }
+    },
+    'ppm': {
+      exponents: {
+        10: -6
+      }
+    },
+    'ppb': {
+      exponents: {
+        10: -9
+      }
+    },
+    'ppt': {
+      exponents: {
+        10: -12
+      }
+    },
+    'ppq': {
+      exponents: {
+        10: -15
+      }
     }
   };
-  // TODO: normalize these to have no units
-  const perUnits = [ '%', 'ppm', 'ppb', 'ppt', 'ppq' ];
-  const prefixlessUnits = perUnits.concat([ '°C' ]);
+  const prefixlessUnits = ['°C', '%', 'ppm', 'ppb', 'ppt', 'ppq'];
 
-  const units = baseUnits.concat(perUnits).concat(Object.keys(derivedUnits));
+  const units = baseUnits.concat(Object.keys(derivedUnits));
   const match = Object.keys(prefixes)
     .filter((prefix) => {
       return prefix !== '' && string.indexOf(prefix) === 0;
@@ -753,10 +780,12 @@ function _parseBase(string) {
     };
     
     if (Object.keys(derivedUnits).indexOf(unit) !== -1) {
-      Object.keys(derivedUnits[unit].exponents).forEach((baseUnit) => {
-        result.result.exponents[baseUnit] = (result.result.exponents[baseUnit] || 0) + derivedUnits[unit].exponents[baseUnit];
-      });
-      
+      result.result.exponents = Object.keys(derivedUnits[unit].exponents).reduce((accum, elt) => {
+        accum[elt] = (accum[elt] || 0) + derivedUnits[unit].exponents[elt];
+
+        return accum;
+      }, result.result.exponents);
+
       result.result.conversion = derivedUnits[unit].conversion ||
         function (magnitude) {
           return magnitude;

@@ -5,9 +5,9 @@ import test from 'ava';
 var SIParser = require('../SIParser.ts');
 
 test('_parseChar should succeed', t => {
-  const result = SIParser._parseChar('aoeu', 'a');
+  const observed = SIParser._parseChar('aoeu', 'a');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'a',
     rest: 'oeu',
     success: true
@@ -15,9 +15,9 @@ test('_parseChar should succeed', t => {
 });
 
 test('_parseChar should fail', t => {
-  const result = SIParser._parseChar('snth', 'a');
+  const observed = SIParser._parseChar('snth', 'a');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: 'snth',
     success: false
@@ -25,9 +25,9 @@ test('_parseChar should fail', t => {
 });
 
 test('_parseDigits should fail if no digits to parse', t => {
-  const result = SIParser._parseDigits('aoeu');
+  const observed = SIParser._parseDigits('aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: 'aoeu',
     success: false
@@ -35,9 +35,9 @@ test('_parseDigits should fail if no digits to parse', t => {
 });
 
 test('_parseDigits should succeed', t => {
-  const result = SIParser._parseDigits('1234aoeu');
+  const observed = SIParser._parseDigits('1234aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '1234',
     rest: 'aoeu',
     result: 1234,
@@ -46,19 +46,19 @@ test('_parseDigits should succeed', t => {
 });
 
 test('_parseDotDigits should fail if not starting with dot', t => {
-  const result = SIParser._parseDotDigits('1234');
+  const observed = SIParser._parseDotDigits('1234');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: '1234',
     success: false
   });
 });
 
-test('_parseDotDigits should result in NaN if no digits after dot', t => {
-  const result = SIParser._parseDotDigits('.aoeu');
+test('_parseDotDigits should observed in NaN if no digits after dot', t => {
+  const observed = SIParser._parseDotDigits('.aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '.',
     rest: 'aoeu',
     result: NaN,
@@ -67,9 +67,9 @@ test('_parseDotDigits should result in NaN if no digits after dot', t => {
 });
 
 test('_parseDecimal should fail', t => {
-  const result = SIParser._parseDecimal('aoeu');
+  const observed = SIParser._parseDecimal('aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: 'aoeu',
     success: false
@@ -77,9 +77,9 @@ test('_parseDecimal should fail', t => {
 });
 
 test('_parseDecimal should fail with plus but no decimal', t => {
-  const result = SIParser._parseDecimal('+aoeu');
+  const observed = SIParser._parseDecimal('+aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '+',
     rest: '+aoeu',
     success: false
@@ -87,9 +87,9 @@ test('_parseDecimal should fail with plus but no decimal', t => {
 });
 
 test('_parseDecimal should succeed with plus followed by decimal', t => {
-  const result = SIParser._parseDecimal('+1234.5678');
+  const observed = SIParser._parseDecimal('+1234.5678');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '+1234.5678',
     rest: '',
     result: 1234.5678,
@@ -98,9 +98,9 @@ test('_parseDecimal should succeed with plus followed by decimal', t => {
 });
 
 test('_parseDecimal should fail with minus but no decimal', t => {
-  const result = SIParser._parseDecimal('-aoeu');
+  const observed = SIParser._parseDecimal('-aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '-',
     rest: '-aoeu',
     success: false
@@ -108,9 +108,9 @@ test('_parseDecimal should fail with minus but no decimal', t => {
 });
 
 test('_parseDecimal should succeed with minus followed by decimal', t => {
-  const result = SIParser._parseDecimal('-1234.5678');
+  const observed = SIParser._parseDecimal('-1234.5678');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '-1234.5678',
     rest: '',
     result: -1234.5678,
@@ -119,9 +119,9 @@ test('_parseDecimal should succeed with minus followed by decimal', t => {
 })
 
 test('_parseDecimal should succeed with digits but no dot', t => {
-  const result = SIParser._parseDecimal('1234aoeu');
+  const observed = SIParser._parseDecimal('1234aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '1234',
     rest: 'aoeu',
     result: 1234,
@@ -130,9 +130,9 @@ test('_parseDecimal should succeed with digits but no dot', t => {
 });
 
 test('_parseDecimal should succeed with digits dot digits', t => {
-  const result = SIParser._parseDecimal('1234.5678');
+  const observed = SIParser._parseDecimal('1234.5678');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '1234.5678',
     rest: '',
     result: 1234.5678,
@@ -141,9 +141,9 @@ test('_parseDecimal should succeed with digits dot digits', t => {
 });
 
 test('_parseDecimal should succeed with just dot digits', t => {
-  const result = SIParser._parseDecimal('.1234');
+  const observed = SIParser._parseDecimal('.1234');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '.1234',
     rest: '',
     result: .1234,
@@ -152,9 +152,9 @@ test('_parseDecimal should succeed with just dot digits', t => {
 });
 
 test('_parseDecimal should succeed with digits dot', t => {
-  const result = SIParser._parseDecimal('1234.aoeu');
+  const observed = SIParser._parseDecimal('1234.aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '1234.',
     rest: 'aoeu',
     result: 1234,
@@ -163,9 +163,9 @@ test('_parseDecimal should succeed with digits dot', t => {
 });
 
 test('_parseInteger should fail with plus but no integer', t => {
-  const result = SIParser._parseInteger('+aoeu');
+  const observed = SIParser._parseInteger('+aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '+',
     rest: '+aoeu',
     success: false
@@ -173,9 +173,9 @@ test('_parseInteger should fail with plus but no integer', t => {
 });
 
 test('_parseInteger should succeed with plus followed by integer', t => {
-  const result = SIParser._parseInteger('+1234');
+  const observed = SIParser._parseInteger('+1234');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '+1234',
     rest: '',
     result: 1234,
@@ -184,9 +184,9 @@ test('_parseInteger should succeed with plus followed by integer', t => {
 });
 
 test('_parseInteger should fail with minus but no integer', t => {
-  const result = SIParser._parseInteger('-aoeu');
+  const observed = SIParser._parseInteger('-aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '-',
     rest: '-aoeu',
     success: false
@@ -194,9 +194,9 @@ test('_parseInteger should fail with minus but no integer', t => {
 });
 
 test('_parseInteger should succeed with minus followed by integer', t => {
-  const result = SIParser._parseInteger('-1234');
+  const observed = SIParser._parseInteger('-1234');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '-1234',
     rest: '',
     result: -1234,
@@ -206,9 +206,9 @@ test('_parseInteger should succeed with minus followed by integer', t => {
 
 
 test('_parseInteger should succeed with just digits', t => {
-  const result = SIParser._parseInteger('1234');
+  const observed = SIParser._parseInteger('1234');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '1234',
     rest: '',
     result: 1234,
@@ -217,13 +217,13 @@ test('_parseInteger should succeed with just digits', t => {
 });
 
 test('_parseBase should parse grams', t => {
-  const result = SIParser._parseBase('g');
+  const observed = SIParser._parseBase('g');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'g',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         g: 1
@@ -234,13 +234,13 @@ test('_parseBase should parse grams', t => {
 });
 
 test('_parseBase should parse meters', t => {
-  const result = SIParser._parseBase('m');
+  const observed = SIParser._parseBase('m');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         m: 1
@@ -251,13 +251,13 @@ test('_parseBase should parse meters', t => {
 });
 
 test('_parseBase should parse seconds', t => {
-  const result = SIParser._parseBase('s');
+  const observed = SIParser._parseBase('s');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 's',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         s: 1
@@ -268,13 +268,13 @@ test('_parseBase should parse seconds', t => {
 });
 
 test('_parseBase should parse Kelvins', t => {
-  const result = SIParser._parseBase('K');
+  const observed = SIParser._parseBase('K');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'K',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         K: 1
@@ -285,13 +285,13 @@ test('_parseBase should parse Kelvins', t => {
 });
 
 test('_parseBase should parse moles', t => {
-  const result = SIParser._parseBase('mol');
+  const observed = SIParser._parseBase('mol');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'mol',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         mol: 1
@@ -302,13 +302,13 @@ test('_parseBase should parse moles', t => {
 });
 
 test('_parseBase should parse amperes', t => {
-  const result = SIParser._parseBase('A');
+  const observed = SIParser._parseBase('A');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'A',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         A: 1
@@ -319,13 +319,13 @@ test('_parseBase should parse amperes', t => {
 });
 
 test('_parseBase should parse candelas', t => {
-  const result = SIParser._parseBase('cd');
+  const observed = SIParser._parseBase('cd');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'cd',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         cd: 1
@@ -336,13 +336,13 @@ test('_parseBase should parse candelas', t => {
 });
 
 test('_parseBase should parse Newtons', t => {
-  const result = SIParser._parseBase('N');
+  const observed = SIParser._parseBase('N');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'N',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 3,
         g: 1,
@@ -355,13 +355,13 @@ test('_parseBase should parse Newtons', t => {
 });
 
 test('_parseBase should parse Pascals', t => {
-  const result = SIParser._parseBase('Pa');
+  const observed = SIParser._parseBase('Pa');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Pa',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 3,
         g: 1,
@@ -374,13 +374,13 @@ test('_parseBase should parse Pascals', t => {
 });
 
 test('_parseBase should parse Joulse', t => {
-  const result = SIParser._parseBase('J');
+  const observed = SIParser._parseBase('J');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'J',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 3,
         g: 1,
@@ -393,13 +393,13 @@ test('_parseBase should parse Joulse', t => {
 });
 
 test('_parseBase should parse Watts', t => {
-  const result = SIParser._parseBase('W');
+  const observed = SIParser._parseBase('W');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'W',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 3,
         g: 1,
@@ -412,13 +412,13 @@ test('_parseBase should parse Watts', t => {
 });
 
 test('_parseBase should parse Celcius', t => {
-  const result = SIParser._parseBase('°C');
+  const observed = SIParser._parseBase('°C');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '°C',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         K: 1
@@ -426,17 +426,17 @@ test('_parseBase should parse Celcius', t => {
     },
     success: true
   });
-  t.is(result.result.conversion(0), 273.15);
+  t.is(observed.result.conversion(0), 273.15);
 });
 
 test('_parseBase should parse yotta', t => {
-  const result = SIParser._parseBase('Ym');
+  const observed = SIParser._parseBase('Ym');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Ym',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 24,
         m: 1
@@ -447,13 +447,13 @@ test('_parseBase should parse yotta', t => {
 });
 
 test('_parseBase should parse zetta', t => {
-  const result = SIParser._parseBase('Zm');
+  const observed = SIParser._parseBase('Zm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Zm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 21,
         m: 1
@@ -464,13 +464,13 @@ test('_parseBase should parse zetta', t => {
 });
 
 test('_parseBase should parse exa', t => {
-  const result = SIParser._parseBase('Em');
+  const observed = SIParser._parseBase('Em');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Em',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 18,
         m: 1
@@ -481,13 +481,13 @@ test('_parseBase should parse exa', t => {
 });
 
 test('_parseBase should parse peta', t => {
-  const result = SIParser._parseBase('Pm');
+  const observed = SIParser._parseBase('Pm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Pm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 15,
         m: 1
@@ -498,13 +498,13 @@ test('_parseBase should parse peta', t => {
 });
 
 test('_parseBase should parse tera', t => {
-  const result = SIParser._parseBase('Tm');
+  const observed = SIParser._parseBase('Tm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Tm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 12,
         m: 1
@@ -515,13 +515,13 @@ test('_parseBase should parse tera', t => {
 });
 
 test('_parseBase should parse giga', t => {
-  const result = SIParser._parseBase('Gm');
+  const observed = SIParser._parseBase('Gm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Gm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 9,
         m: 1
@@ -532,13 +532,13 @@ test('_parseBase should parse giga', t => {
 });
 
 test('_parseBase should parse mega', t => {
-  const result = SIParser._parseBase('Mm');
+  const observed = SIParser._parseBase('Mm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'Mm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 6,
         m: 1
@@ -549,13 +549,13 @@ test('_parseBase should parse mega', t => {
 });
 
 test('_parseBase should parse kilo', t => {
-  const result = SIParser._parseBase('km');
+  const observed = SIParser._parseBase('km');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'km',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 3,
         m: 1
@@ -566,13 +566,13 @@ test('_parseBase should parse kilo', t => {
 });
 
 test('_parseBase should parse hecto', t => {
-  const result = SIParser._parseBase('hm');
+  const observed = SIParser._parseBase('hm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'hm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 2,
         m: 1
@@ -583,13 +583,13 @@ test('_parseBase should parse hecto', t => {
 });
 
 test('_parseBase should parse deca', t => {
-  const result = SIParser._parseBase('dam');
+  const observed = SIParser._parseBase('dam');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'dam',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 1,
         m: 1
@@ -600,13 +600,13 @@ test('_parseBase should parse deca', t => {
 });
 
 test('_parseBase should parse deci', t => {
-  const result = SIParser._parseBase('dm');
+  const observed = SIParser._parseBase('dm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'dm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -1,
         m: 1
@@ -617,13 +617,13 @@ test('_parseBase should parse deci', t => {
 });
 
 test('_parseBase should parse centi', t => {
-  const result = SIParser._parseBase('cm');
+  const observed = SIParser._parseBase('cm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'cm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -2,
         m: 1
@@ -634,13 +634,13 @@ test('_parseBase should parse centi', t => {
 });
 
 test('_parseBase should parse milli', t => {
-  const result = SIParser._parseBase('mm');
+  const observed = SIParser._parseBase('mm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'mm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -3,
         m: 1
@@ -651,13 +651,13 @@ test('_parseBase should parse milli', t => {
 });
 
 test('_parseBase should parse micro', t => {
-  const result = SIParser._parseBase('μm');
+  const observed = SIParser._parseBase('μm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'μm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -6,
         m: 1
@@ -668,13 +668,13 @@ test('_parseBase should parse micro', t => {
 });
 
 test('_parseBase should parse nano', t => {
-  const result = SIParser._parseBase('nm');
+  const observed = SIParser._parseBase('nm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'nm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -9,
         m: 1
@@ -685,13 +685,13 @@ test('_parseBase should parse nano', t => {
 });
 
 test('_parseBase should parse pico', t => {
-  const result = SIParser._parseBase('pm');
+  const observed = SIParser._parseBase('pm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'pm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -12,
         m: 1
@@ -702,13 +702,13 @@ test('_parseBase should parse pico', t => {
 });
 
 test('_parseBase should parse femto', t => {
-  const result = SIParser._parseBase('fm');
+  const observed = SIParser._parseBase('fm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'fm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -15,
         m: 1
@@ -719,13 +719,13 @@ test('_parseBase should parse femto', t => {
 });
 
 test('_parseBase should parse atto', t => {
-  const result = SIParser._parseBase('am');
+  const observed = SIParser._parseBase('am');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'am',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -18,
         m: 1
@@ -736,13 +736,13 @@ test('_parseBase should parse atto', t => {
 });
 
 test('_parseBase should parse zepto', t => {
-  const result = SIParser._parseBase('zm');
+  const observed = SIParser._parseBase('zm');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'zm',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -21,
         m: 1
@@ -753,13 +753,13 @@ test('_parseBase should parse zepto', t => {
 });
 
 test('_parseBase should parse yocto', t => {
-  const result = SIParser._parseBase('ym');
+  const observed = SIParser._parseBase('ym');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'ym',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -24,
         m: 1
@@ -770,13 +770,13 @@ test('_parseBase should parse yocto', t => {
 });
 
 test('_parseFactor should succeed with just base', t => {
-  const result = SIParser._parseFactor('s');
+  const observed = SIParser._parseFactor('s');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 's',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         s: 1
@@ -787,9 +787,9 @@ test('_parseFactor should succeed with just base', t => {
 });
 
 test('_parseFactor should fail with nothing after caret', t => {
-  const result = SIParser._parseFactor('s^');
+  const observed = SIParser._parseFactor('s^');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 's^',
     rest: 's^',
     success: false
@@ -797,13 +797,13 @@ test('_parseFactor should fail with nothing after caret', t => {
 });
 
 test('_parseFactor should succeed with both base and exponent', t => {
-  const result = SIParser._parseFactor('s^-2');
+  const observed = SIParser._parseFactor('s^-2');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 's^-2',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: -0,
         s: -2
@@ -814,9 +814,9 @@ test('_parseFactor should succeed with both base and exponent', t => {
 });
 
 test('_parseCharTerm should fail with nothing after char', t => {
-  const result = SIParser._parseCharTerm('?', '?');
+  const observed = SIParser._parseCharTerm('?', '?');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '?',
     rest: '?',
     success: false
@@ -824,13 +824,13 @@ test('_parseCharTerm should fail with nothing after char', t => {
 });
 
 test('_parseCharTerm should pass with term after char', t => {
-  const result = SIParser._parseCharTerm('?g', '?');
+  const observed = SIParser._parseCharTerm('?g', '?');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '?g',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         g: 1
@@ -841,13 +841,13 @@ test('_parseCharTerm should pass with term after char', t => {
 });
 
 test('_parseTerm should parse factor only', t => {
-  const result = SIParser._parseTerm('K');
+  const observed = SIParser._parseTerm('K');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'K',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         K: 1
@@ -858,13 +858,13 @@ test('_parseTerm should parse factor only', t => {
 });
 
 test('_parseTerm should parse factor times factor', t => {
-  const result = SIParser._parseTerm('g*m');
+  const observed = SIParser._parseTerm('g*m');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'g*m',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         g: 1,
@@ -876,13 +876,13 @@ test('_parseTerm should parse factor times factor', t => {
 });
 
 test('_parseTerm should parse factor divided by factor', t => {
-  const result = SIParser._parseTerm('m/s');
+  const observed = SIParser._parseTerm('m/s');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'm/s',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         m: 1,
@@ -894,13 +894,13 @@ test('_parseTerm should parse factor divided by factor', t => {
 });
 
 test('_parseTerm should recurse over multiplication operators', t => {
-  const result = SIParser._parseTerm('g*m/s');
+  const observed = SIParser._parseTerm('g*m/s');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'g*m/s',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         g: 1,
@@ -913,9 +913,9 @@ test('_parseTerm should recurse over multiplication operators', t => {
 });
 
 test('_parseTerm should fail with nothing after parenthesis', t => {
-  const result = SIParser._parseTerm('(');
+  const observed = SIParser._parseTerm('(');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '(',
     rest: '(',
     success: false
@@ -923,9 +923,9 @@ test('_parseTerm should fail with nothing after parenthesis', t => {
 });
 
 test('_parseTerm should fail with unbalanced parentheses', t => {
-  const result = SIParser._parseTerm('(A');
+  const observed = SIParser._parseTerm('(A');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '(A',
     rest: '(A',
     success: false
@@ -933,13 +933,13 @@ test('_parseTerm should fail with unbalanced parentheses', t => {
 });
 
 test('_parseTerm should parse parentheses', t => {
-  const result = SIParser._parseTerm('(A)');
+  const observed = SIParser._parseTerm('(A)');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '(A)',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         A: 1
@@ -950,13 +950,13 @@ test('_parseTerm should parse parentheses', t => {
 });
 
 test('_parseTerm should recurse through parentheses', t => {
-  const result = SIParser._parseTerm('((A))');
+  const observed = SIParser._parseTerm('((A))');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '((A))',
     rest: '',
     result: {
-      conversion: result.result.conversion,
+      conversion: observed.result.conversion,
       exponents: {
         10: 0,
         A: 1
@@ -967,9 +967,9 @@ test('_parseTerm should recurse through parentheses', t => {
 });
 
 test('_parseMagnitude should succeed wth significand only', t => {
-  const result = SIParser._parseMagnitude('234.567');
+  const observed = SIParser._parseMagnitude('234.567');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567',
     rest: '',
     result: {
@@ -981,9 +981,9 @@ test('_parseMagnitude should succeed wth significand only', t => {
 });
 
 test('_parseMagnitude should fail with nothing after *10^', t => {
-  const result = SIParser._parseMagnitude('234.567*10^');
+  const observed = SIParser._parseMagnitude('234.567*10^');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567*10^',
     rest: '234.567*10^',
     success: false
@@ -991,9 +991,9 @@ test('_parseMagnitude should fail with nothing after *10^', t => {
 });
 
 test('_parseMagnitude parse *10^ syntax', t => {
-  const result = SIParser._parseMagnitude('234.567*10^89');
+  const observed = SIParser._parseMagnitude('234.567*10^89');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567*10^89',
     rest: '',
     result: {
@@ -1005,9 +1005,9 @@ test('_parseMagnitude parse *10^ syntax', t => {
 });
 
 test('_parseMagnitude should fail with nothing after E', t => {
-  const result = SIParser._parseMagnitude('234.567E');
+  const observed = SIParser._parseMagnitude('234.567E');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567E',
     rest: '234.567E',
     success: false
@@ -1015,9 +1015,9 @@ test('_parseMagnitude should fail with nothing after E', t => {
 });
 
 test('_parseMagnitude parse E syntax', t => {
-  const result = SIParser._parseMagnitude('234.567E89');
+  const observed = SIParser._parseMagnitude('234.567E89');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567E89',
     rest: '',
     result: {
@@ -1029,9 +1029,9 @@ test('_parseMagnitude parse E syntax', t => {
 });
 
 test('_parseMagnitude should fail with nothing after e', t => {
-  const result = SIParser._parseMagnitude('234.567e');
+  const observed = SIParser._parseMagnitude('234.567e');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567e',
     rest: '234.567e',
     success: false
@@ -1039,9 +1039,9 @@ test('_parseMagnitude should fail with nothing after e', t => {
 });
 
 test('_parseMagnitude parse e syntax', t => {
-  const result = SIParser._parseMagnitude('234.567e89');
+  const observed = SIParser._parseMagnitude('234.567e89');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '234.567e89',
     rest: '',
     result: {
@@ -1053,9 +1053,9 @@ test('_parseMagnitude parse e syntax', t => {
 });
 
 test('_parseExpression should parse magnitude only', t => {
-  const result = SIParser._parseExpression('6.02214086*10^23');
+  const observed = SIParser._parseExpression('6.02214086*10^23');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '6.02214086*10^23',
     rest: '',
     result: {
@@ -1069,9 +1069,9 @@ test('_parseExpression should parse magnitude only', t => {
 });
 
 test('_parseExpression should parse magnitude with term', t => {
-  const result = SIParser._parseExpression('6.02214086*10^23mol^-1');
+  const observed = SIParser._parseExpression('6.02214086*10^23mol^-1');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '6.02214086*10^23mol^-1',
     rest: '',
     result: {
@@ -1086,9 +1086,9 @@ test('_parseExpression should parse magnitude with term', t => {
 });
 
 test('_parseExpression should parse magnitude times term', t => {
-  const result = SIParser._parseExpression('6.02214086*10^23*mol^-1');
+  const observed = SIParser._parseExpression('6.02214086*10^23*mol^-1');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '6.02214086*10^23*mol^-1',
     rest: '',
     result: {
@@ -1103,9 +1103,9 @@ test('_parseExpression should parse magnitude times term', t => {
 });
 
 test('_parseExpression should parse magnitude divided by term', t => {
-  const result = SIParser._parseExpression('6.02214086*10^23/mol');
+  const observed = SIParser._parseExpression('6.02214086*10^23/mol');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '6.02214086*10^23/mol',
     rest: '',
     result: {
@@ -1120,9 +1120,9 @@ test('_parseExpression should parse magnitude divided by term', t => {
 });
 
 test('_parseExpression should parse units only', t => {
-  const result = SIParser._parseExpression('mol^-1');
+  const observed = SIParser._parseExpression('mol^-1');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: 'mol^-1',
     rest: '',
     result: {
@@ -1141,9 +1141,9 @@ test('_normalizeUnits should throw on non-string input', t => {
 });
 
 test('_normalizeUnits should parse empty string', t => {
-  const result = SIParser._normalizeUnits('');
+  const observed = SIParser._normalizeUnits('');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: '',
     result: {
@@ -1155,9 +1155,9 @@ test('_normalizeUnits should parse empty string', t => {
 });
 
 test('_normalizeUnits should normalize units', t => {
-  const result = SIParser._normalizeUnits('100kPa');
+  const observed = SIParser._normalizeUnits('100kPa');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '100kPa',
     rest: '',
     result: {
@@ -1169,9 +1169,9 @@ test('_normalizeUnits should normalize units', t => {
 });
 
 test('_normalizeUnits should fail', t => {
-  const result = SIParser._normalizeUnits('aoeu');
+  const observed = SIParser._normalizeUnits('aoeu');
 
-  t.deepEqual(result, {
+  t.deepEqual(observed, {
     consumed: '',
     rest: 'aoeu',
     success: false

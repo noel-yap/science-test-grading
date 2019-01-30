@@ -1,23 +1,23 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   // Or DocumentApp or FormApp.
-  ui.createMenu("Science Test")
-      .addItem("Recalculate Points", "recalculatePoints")
+  ui.createMenu('Science Test')
+      .addItem('Recalculate Points', 'recalculatePoints')
       .addSeparator()
-      .addItem("Activate Create Mode", "activateCreateMode")
-      .addItem("Activate Grade Mode", "activateGradeMode")
+      .addItem('Activate Create Mode', 'activateCreateMode')
+      .addItem('Activate Grade Mode', 'activateGradeMode')
       .addToUi();
 }
 
 function recalculatePoints() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 
-  _recalculatePoints(spreadsheet.getSheetByName("Ana Graders Entries"));
-  _recalculatePoints(spreadsheet.getSheetByName("Kata Graders Entries"));
+  _recalculatePoints(spreadsheet.getSheetByName('Ana Graders Entries'));
+  _recalculatePoints(spreadsheet.getSheetByName('Kata Graders Entries'));
 }
 
 function _recalculatePoints(gradersEntriesSheet) {
-  const takerAnswersStartRow = _getGradingProperties(gradersEntriesSheet.getParent())["taker-answers-start-row"];
+  const takerAnswersStartRow = _getGradingProperties(gradersEntriesSheet.getParent())['taker-answers-start-row'];
   const answersHeaderRow = takerAnswersStartRow - 2;
   
   const dataRange = gradersEntriesSheet.getDataRange();
@@ -28,16 +28,16 @@ function _recalculatePoints(gradersEntriesSheet) {
       .map(function (_, i) {
         return i + 1;
       }).filter(function (c) {
-        return gradersEntriesSheet.getRange(answersHeaderRow, c).getValue().indexOf("Points") !== -1;
+        return gradersEntriesSheet.getRange(answersHeaderRow, c).getValue().indexOf('Points') !== -1;
       })
       .map(function (c) {
         return gradersEntriesSheet.getRange(takerAnswersStartRow, c, height - takerAnswersStartRow + 1, 1);
       });
   pointFormulaRanges.forEach(function (pointFormulaRange) {
-    Logger.log("_recalculatePoints: pointFormulaRange = %s", pointFormulaRange);
+    console.log(`_recalculatePoints: pointFormulaRange = ${pointFormulaRange}`);
     
     const pointFormulae = pointFormulaRange.getFormulas();
-    Logger.log("_recalculatePoints: pointFormulae = %s", pointFormulae);
+    console.log(`_recalculatePoints: pointFormulae = ${pointFormulae}`);
     
     pointFormulaRange.setFormulas(pointFormulae);
   });
@@ -53,7 +53,7 @@ function activateCreateMode() {
 function activateGradeMode() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   
-  const anaGradersEntriesSheet = spreadsheet.getSheetByName("Ana Graders Entries");
+  const anaGradersEntriesSheet = spreadsheet.getSheetByName('Ana Graders Entries');
 
   const kataGradersEntriesSheet = _createKataGradersEntriesSheetFrom(anaGradersEntriesSheet);
   _protectNonDataEntryCells(anaGradersEntriesSheet);
@@ -71,10 +71,10 @@ function _createKataGradersEntriesSheetFrom(fromSheet) {
   const spreadsheet = fromSheet.getParent();
   const fromSheetName = fromSheet.getName();
 
-  const takerAnswersStartRow = _getGradingProperties(spreadsheet)["taker-answers-start-row"];
+  const takerAnswersStartRow = _getGradingProperties(spreadsheet)['taker-answers-start-row'];
   const creatorAnswersRow = takerAnswersStartRow - 1;
   
-  const kataGradersEntriesName = "Kata Graders Entries";
+  const kataGradersEntriesName = 'Kata Graders Entries';
 
   // Before cloning the sheet, delete any previous copy.
   const old = spreadsheet.getSheetByName(kataGradersEntriesName);
@@ -95,10 +95,10 @@ function _createKataGradersEntriesSheetFrom(fromSheet) {
   kataGradersEntriesSheet.getRange('$A$1').setValue('Kata');
   kataGradersEntriesSheet
       .getRange(creatorAnswersRow, 1, 1, kataWidth)
-      .setFormulaR1C1([ "'", fromSheetName, "'!R[0]C[0]" ].join(""));
+      .setFormulaR1C1(`'${fromSheetName}'!R[0]C[0]`);
   kataGradersEntriesSheet
       .getRange(takerAnswersStartRow, 2, kataHeight - takerAnswersStartRow + 1, 1)
-      .setFormulaR1C1([ "'", fromSheetName, "'!R[0]C[0]" ].join(""));
+      .setFormulaR1C1(`'${fromSheetName}'!R[0]C[0]`);
 
   _protectNonDataEntryCells(kataGradersEntriesSheet);
   
@@ -110,7 +110,7 @@ function _updateGradesVerificationSheetFrom(anaGradersEntriesSheet, kataGradersE
   const kataGradersEntriesSheetName = kataGradersEntriesSheet.getName();
 
   const spreadsheet = anaGradersEntriesSheet.getParent();
-  const gradesVerificationSheet = spreadsheet.getSheetByName("Grades Verification");
+  const gradesVerificationSheet = spreadsheet.getSheetByName('Grades Verification');
 
   const startRowOfGivenAnswers = 6;
   const numberOfRowsToDelete = gradesVerificationSheet.getMaxRows() - startRowOfGivenAnswers + 1;
@@ -122,43 +122,43 @@ function _updateGradesVerificationSheetFrom(anaGradersEntriesSheet, kataGradersE
   gradesVerificationSheet.insertRowsAfter(startRowOfGivenAnswers - 1, numberOfRowsToAdd);
   gradesVerificationSheet
       .getRange(4, 3)
-      .setFormula([ "'", anaGradersEntriesSheetName, "'!$A$1" ].join(""));
+      .setFormula(`'${anaGradersEntriesSheetName}'!$A$1`);
   gradesVerificationSheet
       .getRange(5, 1, numberOfRowsToAdd + 2, 1)
-      .setFormulaR1C1([ "'", anaGradersEntriesSheetName, "'!R[0]C[1]" ].join(""));
+      .setFormulaR1C1(`'${anaGradersEntriesSheetName}'!R[0]C[1]`);
   gradesVerificationSheet
       .getRange(5, 2, numberOfRowsToAdd + 2, 1)
-      .setFormulaR1C1([ "'", anaGradersEntriesSheetName, "'!R[0]C[-1]" ].join(""));
+      .setFormulaR1C1(`'${anaGradersEntriesSheetName}'!R[0]C[-1]`);
   gradesVerificationSheet
       .getRange(5, 3, numberOfRowsToAdd + 2, 1)
-      .setFormulaR1C1([ "'", anaGradersEntriesSheetName, "'!R[0]C[0]" ].join(""));
+      .setFormulaR1C1(`'${anaGradersEntriesSheetName}'!R[0]C[0]`);
   gradesVerificationSheet
       .getRange(4, 4)
-      .setFormula([ "'", kataGradersEntriesSheetName, "'!$A$1" ].join(""));
+      .setFormula(`'${kataGradersEntriesSheetName}'!$A$1`);
   gradesVerificationSheet
       .getRange(5, 4, numberOfRowsToAdd + 2, 1)
-      .setFormulaR1C1([ "'", kataGradersEntriesSheetName, "'!R[0]C[-3]" ].join(""));
+      .setFormulaR1C1(`'${kataGradersEntriesSheetName}'!R[0]C[-3]`);
   gradesVerificationSheet
       .getRange(5, 5, numberOfRowsToAdd + 2, 1)
-      .setFormulaR1C1([ "'", kataGradersEntriesSheetName, "'!R[0]C[-2]" ].join(""));
+      .setFormulaR1C1(`'${kataGradersEntriesSheetName}'!R[0]C[-2]`);
   
   gradesVerificationSheet
       .getRange(6, 1, numberOfRowsToAdd + 1, 1)
-      .setHorizontalAlignment("center")
-      .setBorder(null, null, null, true, null, null, "black", SpreadsheetApp.BorderStyle.DOUBLE);
+      .setHorizontalAlignment('center')
+      .setBorder(null, null, null, true, null, null, 'black', SpreadsheetApp.BorderStyle.DOUBLE);
   gradesVerificationSheet
       .getRange(6, 2, numberOfRowsToAdd, 4)
-      .setHorizontalAlignment("normal");
+      .setHorizontalAlignment('normal');
   gradesVerificationSheet
       .getRange(6, 3, numberOfRowsToAdd, 1)
-      .setBorder(null, null, null, true, null, null, "black", SpreadsheetApp.BorderStyle.DASHED);
+      .setBorder(null, null, null, true, null, null, 'black', SpreadsheetApp.BorderStyle.DASHED);
   gradesVerificationSheet
       .getRange(6, 5, numberOfRowsToAdd, 1)
-      .setBorder(null, null, null, true, null, null, "black", SpreadsheetApp.BorderStyle.SOLID);
+      .setBorder(null, null, null, true, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function _hideSheetsNotUsedDirectlyByGraders(spreadsheet) {
-  const sheetNames = _getGradingProperties(spreadsheet)["sheets-to-hide-from-graders"];
+  const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
       .forEach(function (sheetName) {
@@ -171,7 +171,7 @@ function _hideSheetsNotUsedDirectlyByGraders(spreadsheet) {
 }
 
 function _showSheetsNotUsedDirectlyByGraders(spreadsheet) {
-  const sheetNames = _getGradingProperties(spreadsheet)["sheets-to-hide-from-graders"];
+  const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
       .forEach(function (sheetName) {
@@ -185,14 +185,14 @@ function _showSheetsNotUsedDirectlyByGraders(spreadsheet) {
 
 function _reorderSheets(spreadsheet) {
   const sheetNames = [
-      "examples",
-      "grading.properties",
-      "Grades -- scratch",
-      "Kata Graders Entries",
-      "Grades Verification", 
-      "Ana Graders Entries",
-      "Grader Instructions",
-      "Creator Instructions" ];
+      'examples',
+      'grading.properties',
+      'Grades -- scratch',
+      'Kata Graders Entries',
+      'Grades Verification', 
+      'Ana Graders Entries',
+      'Grader Instructions',
+      'Creator Instructions' ];
   sheetNames.forEach(function (sheetName) {
     const sheet = spreadsheet.getSheetByName(sheetName);
     
@@ -212,7 +212,7 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
 
   const unprotectedRanges = _sequence(1, width)
       .filter(function (c) {
-        return gradersEntriesSheet.getRange(4, c).getValue().indexOf("Answer") !== -1;
+        return gradersEntriesSheet.getRange(4, c).getValue().indexOf('Answer') !== -1;
       }).concat([ 1 ])
       .map(function (c) {
         return gradersEntriesSheet.getRange(6, c, height - 5, 1);
@@ -228,9 +228,9 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
           const unprotectedCell = unprotectedRange.getCell(r, 1);
           
           return [ SpreadsheetApp.newDataValidation()
-              .requireFormulaSatisfied([ "=istext(", unprotectedCell.getA1Notation(), ")" ].join(''))
+              .requireFormulaSatisfied(`=istext(${unprotectedCell.getA1Notation()})`)
               .setAllowInvalid(false)
-              .setHelpText("Provided answers must be text (ie starting with `'`).")
+              .setHelpText('Provided answers must be text (ie starting with `\'`).')
               .build() ];
         });
     

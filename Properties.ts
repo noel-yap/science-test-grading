@@ -21,11 +21,11 @@ function _getGradingProperties(spreadsheet) {
 
       return accum;
     }, defaultValues);
-  console.log(properties);
+  console.log(`_getGradingProperties: properties = ${properties}`);
 
   return properties;
 }
 
 module.exports = {
-  _getGradingProperties: _getGradingProperties,
+  _getGradingProperties: _getGradingProperties
 };

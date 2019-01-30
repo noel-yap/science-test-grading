@@ -3,18 +3,18 @@ function throttle(result) {
 
   const cache = CacheService.getScriptCache();
   
-  const cacheKey = "exec qps";
-  const lastCall = cache.get(cacheKey) || new Date().getTime();
+  const cacheKey = 'exec qps';
+  const lastCall = parseInt(cache.get(cacheKey)) || new Date().getTime();
   
-  Utilities.sleep(Math.min(MAX_SLEEP, new Date().getTime()-lastCall));
+  Utilities.sleep(Math.min(MAX_SLEEP, new Date().getTime() - lastCall));
 
-  cache.put(cacheKey, new Date().getTime(), 1);
+  cache.put(cacheKey, new Date().getTime().toString(), 1);
 
   return result;
 }
 
 function _throttle(fn, args) {
-  Logger.log("_throttle: %s(%s)", fn, args);
+  console.log(`_throttle: ${fn}(${args})`);
   
   return throttle(fn.apply(this, args));
 }

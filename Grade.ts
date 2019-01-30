@@ -1,3 +1,27 @@
+var __Number__ = __require('./Number.ts', () => {
+  return {
+    _numberOfSignificantFigures: _numberOfSignificantFigures,
+    _round: _round,
+    _orderOfMagnitude: _orderOfMagnitude,
+    _isNaN: _isNaN
+  };
+});
+var __Properties__ = __require('./Properties.ts', () => {
+  return {
+    _getGradingProperties: _getGradingProperties
+  };
+});
+var __ScientificNotation__ = __require('./ScientificNotation.ts', () => {
+  return {
+    _sciToNum: _sciToNum
+  };
+});
+var __SIParser__ = __require('./SIParser.ts', () => {
+  return {
+    _normalizeUnits: _normalizeUnits
+  };
+});
+
 /**
  * @param points    Number of full-credit points.
  * @param observed  Cell or matrix of student answers.
@@ -6,11 +30,11 @@
  * @return          Matrix of earned points along with rationales for points taken off.
  **/
 function grade(points, observed, expected) {
-  const gradingProperties = _getGradingProperties(SpreadsheetApp.getActiveSpreadsheet());
+  const gradingProperties = __Properties__._getGradingProperties(SpreadsheetApp.getActiveSpreadsheet());
 
   // expected becomes an array of the rest of the arguments
   expected = Array.prototype.slice.call(arguments, 2);
-  Logger.log("grade: expected = %s", expected);
+  console.log(`grade: expected = ${expected}`);
   
   if (!Array.isArray(observed)) {
     observed = [[ observed ]];
@@ -20,19 +44,19 @@ function grade(points, observed, expected) {
     return row.map(function (cell) {
       return expected.map(function (e) {
         try {
-          Logger.log("grade: points = %s, cell = %s, e = %s", points, cell, e);
+          console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}`);
           const result = _grade(gradingProperties, points, cell, e);
-          Logger.log("grade: points = %s, cell = %s, e = %s, _grade = %s", points, cell, e, result);
+          console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}, _grade = ${result}`);
           
           return result;
         } catch(e) {
-          Logger.log("grade: e = %s", e);
+          console.log(`grade: e = ${e}`);
           
-          return [0.0, e.fileName + ":" + e.lineNumber + ": " + e.toString()];
+          return [0.0, e.fileName + ':' + e.lineNumber + ': ' + e.toString()];
         }
       }).reduce(function (accum, elt) {
-        Logger.log("grade: accum = %s, elt = %s", accum, elt);
-        return (accum[1] === undefined || accum[1].toString().indexOf("Error:") === 0 || elt[0] > accum[0])
+        console.log(`grade: accum = ${accum}, elt = ${elt}`);
+        return (accum[1] === undefined || accum[1].toString().indexOf('Error:') === 0 || elt[0] > accum[0])
             ? elt
             : accum;
       }, [ -points, undefined ]);
@@ -68,7 +92,7 @@ function _grade(gradingProperties, points, observed, expected) {
     expected = expected[0];
   }
   
-  Logger.log("_grade: observed = %s, expected = %s", observed, expected);
+  console.log(`_grade: observed = ${observed}, expected = ${expected}`);
   
   var minExpectedNormalizedMagnitude;
   var minExpectedNormalizedUnits;
@@ -80,13 +104,13 @@ function _grade(gradingProperties, points, observed, expected) {
     const minExpected = expected[0];
     const maxExpected = expected[expected.length - 1];
     
-    Logger.log("_grade: minExpected = %s", minExpected);
+    console.log(`_grade: minExpected = ${minExpected}`);
     const minExpectedParts = _getParts(minExpected);
     minExpectedNormalizedMagnitude = minExpectedParts.normalizedMagnitude;
     minExpectedNormalizedUnits = minExpectedParts.normalizedUnits;
     minExpectedSignificantFigures = minExpectedParts.significantFigures;
 
-    Logger.log("_grade: maxExpected = %s", maxExpected);
+    console.log(`_grade: maxExpected = ${maxExpected}`);
     const maxExpectedParts = _getParts(maxExpected);
     maxExpectedNormalizedMagnitude = maxExpectedParts.normalizedMagnitude;
     maxExpectedNormalizedUnits = maxExpectedParts.normalizedUnits;
@@ -109,7 +133,7 @@ function _grade(gradingProperties, points, observed, expected) {
   const observedSignificantFigures = observedParts.significantFigures;
   
   if (minExpectedNormalizedUnits !== maxExpectedNormalizedUnits) {
-    throw new Error("Normalized expected units must be the same.");
+    throw new Error(`Normalized expected units must be the same but were '${minExpectedNormalizedUnits}' and '${maxExpectedNormalizedUnits}'.`);
   }
   
   const expectedNormalizedUnits = minExpectedNormalizedUnits;
@@ -118,9 +142,9 @@ function _grade(gradingProperties, points, observed, expected) {
       ? minExpectedNormalizedMagnitude
       : maxExpectedNormalizedMagnitude;
 
-  const minExpectedNormalizedOrderOfMagnitude = _orderOfMagnitude(minExpectedNormalizedMagnitude);
-  const maxExpectedNormalizedOrderOfMagnitude = _orderOfMagnitude(maxExpectedNormalizedMagnitude);
-  const observedNormalizedOrderOfMagnitude = _orderOfMagnitude(observedNormalizedMagnitude);
+  const minExpectedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(minExpectedNormalizedMagnitude);
+  const maxExpectedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(maxExpectedNormalizedMagnitude);
+  const observedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(observedNormalizedMagnitude);
   
   const minExpectedNormalizedMagnitudeAdjusted = _adjustOrderOfMagnitude(minExpectedNormalizedMagnitude, minExpectedNormalizedOrderOfMagnitude);
   const maxExpectedNormalizedMagnitudeAdjusted = _adjustOrderOfMagnitude(maxExpectedNormalizedMagnitude, maxExpectedNormalizedOrderOfMagnitude);
@@ -139,86 +163,78 @@ function _grade(gradingProperties, points, observed, expected) {
       ? 1
       : 0;
   
-  Logger.log("_grade: expected = %s", expected);
-  Logger.log("_grade: observed = %s", observed);
+  console.log(`_grade: expected = ${expected}`);
+  console.log(`_grade: observed = ${observed}`);
 
-  Logger.log("_grade: minExpectedNormalizedMagnitude = %s", minExpectedNormalizedMagnitude);
-  Logger.log("_grade: maxExpectedNormalizedMagnitude = %s", maxExpectedNormalizedMagnitude);
-  Logger.log("_grade: closestExpectedNormalizedMagnitude = %s", closestExpectedNormalizedMagnitude);
-  Logger.log("_grade: observedNormalizedMagnitude = %s", observedNormalizedMagnitude);
+  console.log(`_grade: minExpectedNormalizedMagnitude = ${minExpectedNormalizedMagnitude}`);
+  console.log(`_grade: maxExpectedNormalizedMagnitude = ${maxExpectedNormalizedMagnitude}`);
+  console.log(`_grade: closestExpectedNormalizedMagnitude = ${closestExpectedNormalizedMagnitude}`);
+  console.log(`_grade: observedNormalizedMagnitude = ${observedNormalizedMagnitude}`);
   
-  Logger.log("_grade: minExpectedNormalizedOrderOfMagnitude = %s", minExpectedNormalizedOrderOfMagnitude);
-  Logger.log("_grade: maxExpectedNormalizedOrderOfMagnitude = %s", maxExpectedNormalizedOrderOfMagnitude);
-  Logger.log("_grade: observedNormalizedOrderOfMagnitude = %s", observedNormalizedOrderOfMagnitude);
+  console.log(`_grade: minExpectedNormalizedOrderOfMagnitude = ${minExpectedNormalizedOrderOfMagnitude}`);
+  console.log(`_grade: maxExpectedNormalizedOrderOfMagnitude = ${maxExpectedNormalizedOrderOfMagnitude}`);
+  console.log(`_grade: observedNormalizedOrderOfMagnitude = ${observedNormalizedOrderOfMagnitude}`);
   
-  Logger.log("_grade: minExpectedNormalizedMagnitudeAdjusted = %s", minExpectedNormalizedMagnitudeAdjusted);
-  Logger.log("_grade: maxExpectedNormalizedMagnitudeAdjusted = %s", maxExpectedNormalizedMagnitudeAdjusted);
-  Logger.log("_grade: closestExpectedNormalizedMagnitudeAdjusted = %s", closestExpectedNormalizedMagnitudeAdjusted);
-  Logger.log("_grade: observedNormalizedMagnitudeAdjusted = %s", observedNormalizedMagnitudeAdjusted);
+  console.log(`_grade: minExpectedNormalizedMagnitudeAdjusted = ${minExpectedNormalizedMagnitudeAdjusted}`);
+  console.log(`_grade: maxExpectedNormalizedMagnitudeAdjusted = ${maxExpectedNormalizedMagnitudeAdjusted}`);
+  console.log(`_grade: closestExpectedNormalizedMagnitudeAdjusted = ${closestExpectedNormalizedMagnitudeAdjusted}`);
+  console.log(`_grade: observedNormalizedMagnitudeAdjusted = ${observedNormalizedMagnitudeAdjusted}`);
   
-  Logger.log("_grade: minExpectedSignificantFigures = %s", minExpectedSignificantFigures);
-  Logger.log("_grade: maxExpectedSignificantFigures = %s", maxExpectedSignificantFigures);
-  Logger.log("_grade: expectedSignificantFigures = %s", expectedSignificantFigures);
-  Logger.log("_grade: observedSignificantFigures = %s", observedSignificantFigures);
-  Logger.log("_grade: significantFiguresCmp = %s", significantFiguresCmp);
+  console.log(`_grade: minExpectedSignificantFigures = ${minExpectedSignificantFigures}`);
+  console.log(`_grade: maxExpectedSignificantFigures = ${maxExpectedSignificantFigures}`);
+  console.log(`_grade: expectedSignificantFigures = ${expectedSignificantFigures}`);
+  console.log(`_grade: observedSignificantFigures = ${observedSignificantFigures}`);
+  console.log(`_grade: significantFiguresCmp = ${significantFiguresCmp}`);
   
-  Logger.log("_grade: minExpectedNormalizedUnits = %s", minExpectedNormalizedUnits);
-  Logger.log("_grade: maxExpectedNormalizedUnits = %s", maxExpectedNormalizedUnits);
-  Logger.log("_grade: expectedNormalizedUnits = %s", expectedNormalizedUnits);
-  Logger.log("_grade: observedNormalizedUnits = %s", observedNormalizedUnits);
+  console.log(`_grade: minExpectedNormalizedUnits = ${minExpectedNormalizedUnits}`);
+  console.log(`_grade: maxExpectedNormalizedUnits = ${maxExpectedNormalizedUnits}`);
+  console.log(`_grade: expectedNormalizedUnits = ${expectedNormalizedUnits}`);
+  console.log(`_grade: observedNormalizedUnits = ${observedNormalizedUnits}`);
   
   const correctOrderOfMagnitude = minExpectedNormalizedOrderOfMagnitude <= observedNormalizedOrderOfMagnitude && observedNormalizedOrderOfMagnitude <= maxExpectedNormalizedOrderOfMagnitude;
   const withinAdjustedExpectedRange = minExpectedNormalizedMagnitudeAdjusted <= observedNormalizedMagnitudeAdjusted && observedNormalizedMagnitudeAdjusted <= maxExpectedNormalizedMagnitudeAdjusted;
   const closeToAdjustedExpected = Math.abs(observedNormalizedMagnitudeAdjusted - closestExpectedNormalizedMagnitudeAdjusted) / closestExpectedNormalizedMagnitudeAdjusted < .01;
-  
-  function roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
-    return fewerSignificantFigures === moreSignificantFigures || _round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures))/Math.log(10)) + 1) === fewerSignificantFigures;
-  };
-  const roundsToWithinSignificantFigure = roundToSignificantFigure(
-      significantFiguresCmp < 0 ? observedNormalizedMagnitudeAdjusted : closestExpectedNormalizedMagnitudeAdjusted,
-      significantFiguresCmp < 0 ? closestExpectedNormalizedMagnitudeAdjusted : observedNormalizedMagnitudeAdjusted);
-  
-  Logger.log("_grade: correctOrderOfMagnitude = %s", correctOrderOfMagnitude);
-  Logger.log("_grade: withinAdjustedExpectedRange = %s", withinAdjustedExpectedRange);
-  Logger.log("_grade: closeToAdjustedExpected = %s", closeToAdjustedExpected);
-  Logger.log("_grade: roundsToWithinSignificantFigure = %s", roundsToWithinSignificantFigure);
-  
-  const magnitudePortion = gradingProperties["magnitude-portion"];
-  const magnitudeCredit = _isNaN(observedNormalizedMagnitude)
-      ? [[ gradingProperties["missing-magnitude"], "No magnitude." ]]
+
+  console.log(`_grade: correctOrderOfMagnitude = ${correctOrderOfMagnitude}`);
+  console.log(`_grade: withinAdjustedExpectedRange = ${withinAdjustedExpectedRange}`);
+  console.log(`_grade: closeToAdjustedExpected = ${closeToAdjustedExpected}`);
+
+  const magnitudePortion = gradingProperties['magnitude-portion'];
+  const magnitudeCredit = __Number__._isNaN(observedNormalizedMagnitude)
+      ? [[ gradingProperties['missing-magnitude'], 'No magnitude.' ]]
       : ((correctOrderOfMagnitude
           ? [[ 0.0, undefined ]]
-          : [[ gradingProperties["incorrect-order-of-magnitude"], "Incorrect order of magnitude." ]])
-          .concat(withinAdjustedExpectedRange || roundsToWithinSignificantFigure
+          : [[ gradingProperties['incorrect-order-of-magnitude'], 'Incorrect order of magnitude.' ]])
+          .concat(withinAdjustedExpectedRange
               ? (significantFiguresCmp < 0
-                  ? [[ gradingProperties["too-few-significant-figures"], "Too few significant figures." ]]
+                  ? [[ gradingProperties['too-few-significant-figures'], 'Too few significant figures.' ]]
                   : significantFiguresCmp > 0
-                  ? [[ gradingProperties["too-many-significant-figures"], "Too many significant figures." ]]
+                  ? [[ gradingProperties['too-many-significant-figures'], 'Too many significant figures.' ]]
                   : [[ 0.0, undefined ]])
               : closeToAdjustedExpected
-              ? [[ gradingProperties["order-adjusted-magnitude-off-by-less-than-one-percent"], "Magnitude close but not exactly correct." ]]
-              : [[ gradingProperties["order-adjusted-magnitude-off-by-more-than-one-percent"], "Incorrect order-of-magnitude-adjusted magnitude." ]]));
-  const unitsPortion = gradingProperties["units-portion"];
-  const unitsCredit = observedNormalizedUnits === "" && expectedNormalizedUnits !== ""
-      ? [[ gradingProperties["missing-units"], "No units." ]]
+              ? [[ gradingProperties['order-adjusted-magnitude-off-by-less-than-one-percent'], 'Magnitude close but not exactly correct.' ]]
+              : [[ gradingProperties['order-adjusted-magnitude-off-by-more-than-one-percent'], 'Incorrect order-of-magnitude-adjusted magnitude.' ]]));
+  const unitsPortion = gradingProperties['units-portion'];
+  const unitsCredit = observedNormalizedUnits === '' && expectedNormalizedUnits !== ''
+      ? [[ gradingProperties['missing-units'], 'No units.' ]]
       : observedNormalizedUnits !== expectedNormalizedUnits
-      ? [[ gradingProperties["incorrect-units"], "Incorrect units." ]]
+      ? [[ gradingProperties['incorrect-units'], 'Incorrect units.' ]]
       : [[ 0.0, undefined ]];
   
-  Logger.log("_grade: magnitudeCredit = %s", magnitudeCredit);
-  Logger.log("_grade: unitsCredit = %s", unitsCredit);
+  console.log(`_grade: magnitudeCredit = ${magnitudeCredit}`);
+  console.log(`_grade: unitsCredit = ${unitsCredit}`);
 
-  const noExpectedMagnitude = _isNaN(minExpectedNormalizedMagnitudeAdjusted) && _isNaN(maxExpectedNormalizedMagnitudeAdjusted);
-  const noExpectedUnits = expectedNormalizedUnits === "";
+  const noExpectedMagnitude = __Number__._isNaN(minExpectedNormalizedMagnitudeAdjusted) && __Number__._isNaN(maxExpectedNormalizedMagnitudeAdjusted);
+  const noExpectedUnits = expectedNormalizedUnits === '';
   const result = []
       .concat(noExpectedMagnitude ? [] : magnitudeCredit)
       .concat(noExpectedUnits ? [] : unitsCredit)
       .filter(function (elt) {
         return elt[1] !== undefined;
       }).reduce(function (accum, elt) {
-        return [ accum[0] + elt[0], [ accum[1], elt[1] ].join(" ") ];
-      }, [ 0.0, "" ]);
-  Logger.log("_grade: result = %s", result);
+        return [ accum[0] + elt[0], [ accum[1], elt[1] ].join(' ') ];
+      }, [ 0.0, '' ]);
+  console.log(`_grade: result = ${result}`);
   result[0] = points
       - points
           * result[0]
@@ -226,8 +242,8 @@ function _grade(gradingProperties, points, observed, expected) {
           / (noExpectedUnits ? magnitudePortion : 1);
   result[1] = result[1].trim();
 
-  if (observed === "") {
-    result[1] = "";
+  if (observed === '') {
+    result[1] = '';
   }
   
   return result;
@@ -235,17 +251,22 @@ function _grade(gradingProperties, points, observed, expected) {
 
 function _getParts(expression) {
   try {
-    const normalizeExpressionResult = _normalizeUnits(expression);
-    Logger.log("_getParts: expression = %s, normalized = %s", expression, normalizeExpressionResult);
+    const normalizeExpressionResult = __SIParser__._normalizeUnits(expression);
+    console.log(`_getParts: expression = ${expression}, normalized = ${normalizeExpressionResult}`);
     
     if (normalizeExpressionResult.success) {
-      const normalizedMagnitude = _sciToNum(normalizeExpressionResult.result.magnitude);
+      const magnitudeProvided = '0' <= expression.charAt(0) && expression.charAt(0) <= '9' || expression.charAt(0) === '.';
+      const normalizedMagnitude = magnitudeProvided
+          ? __ScientificNotation__._sciToNum(normalizeExpressionResult.result.magnitude)
+          : NaN;
       const normalizedUnits = normalizeExpressionResult.result.units;
-      const significantFigures = _numberOfSignificantFigures(expression);
+      const significantFigures = magnitudeProvided
+          ? __Number__._numberOfSignificantFigures(expression)
+          : NaN;
       
-      Logger.log("_getParts: normalizedMagnitude = %s", normalizedMagnitude);
-      Logger.log("_getParts: normalizedUnits = %s", normalizedUnits);
-      Logger.log("_getParts: significantFigures = %s", significantFigures);
+      console.log(`_getParts: normalizedMagnitude = ${normalizedMagnitude}`);
+      console.log(`_getParts: normalizedUnits = ${normalizedUnits}`);
+      console.log(`_getParts: significantFigures = ${significantFigures}`);
       
       return {
         significantFigures: significantFigures,
@@ -253,33 +274,42 @@ function _getParts(expression) {
         normalizedUnits: normalizedUnits
       };
     } else {
-      throw new Error("Unable to parse after `" + normalizeExpressionResult.consumed + "` in `" + expression + "`. Non-metric units might be being used.");
+      throw new Error(`Unable to parse after '${normalizeExpressionResult.consumed}' in '${expression}'. Non-metric units might be being used.`);
     }
   } catch (e) {
-    if (e.message.indexOf("must be of type string") !== -1) {
-      throw new Error("'" + expression + "' must be entered in as text (ie by starting it with `'`)");
+    if (e.message.indexOf('must be of type string') !== -1) {
+      throw new Error(`${expression}' must be entered in as text (ie by starting it with \`'\`)`);
     } else {
       throw e;
     }
   }
 }
-                   
-function _numberOfSignificantFigures(string) {
-  string = string.toString();
-  
-  string = string.replace(/^0+|([^.0-9].*)/g, "");
-  
-  const digits = (string.indexOf('.') >= 0
-      ? string.replace(/\./, "")
-      : string.replace(/0+$/, ""));
-  
-  return digits.length;
+
+function _adjustOrderOfMagnitude(number, adjustBy) {
+  const numberOfSignificantFigures = __Number__._numberOfSignificantFigures(number.toString());
+  const orderOfMagnitude = __Number__._orderOfMagnitude(number);
+  console.log(`_adjustOrderOfMagnitude: adjustBy = ${adjustBy}, numberOfSignificantFigures = ${numberOfSignificantFigures}, orderOfMagnitude = ${orderOfMagnitude}`);
+
+  return __Number__._round(number * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
 }
 
-function _orderOfMagnitude(number) {
-  return Math.round(Math.log(Math.abs(number))/Math.log(10) + .5);
+function _roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
+  console.log(`_roundToSignificantFigure: fewerSignificantFigures = ${fewerSignificantFigures}, moreSignificantFigures = ${moreSignificantFigures}`);
+
+  return fewerSignificantFigures === moreSignificantFigures ||
+      __Number__._round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures))/Math.log(10)) + 1) === fewerSignificantFigures;
 }
 
-function _adjustOrderOfMagnitude(number, orderOfMagnitude) {
-  return number / Math.pow(10, orderOfMagnitude);
+function __require(file, otherwise) {
+  try {
+    return require(file);
+  } catch (e) {
+    return otherwise();
+  }
 }
+
+module.exports = {
+  _grade: _grade,
+  _getParts: _getParts,
+  _adjustOrderOfMagnitude: _adjustOrderOfMagnitude
+};

@@ -53,7 +53,7 @@
  **/
 function normalizeUnits(string) {
   const normalizeUnitsResult = _throttle(_normalizeUnits, Array.prototype.slice.call(arguments));
-  console.log('_normalizeUnits: normalizeUnitsResult = %s', normalizeUnitsResult);
+  console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
   
   if (normalizeUnitsResult.success) {
     const magnitudeString = normalizeUnitsResult.result.magnitude;
@@ -63,7 +63,7 @@ function normalizeUnits(string) {
         ? ''
         : magnitudeString + (unitsString === '%' || unitsString === '' ? '' : ' ') + unitsString;
   } else {
-    throw new Error('Unable to parse after `' + normalizeUnitsResult.consumed + '` in `' + string + '`. Are you sure metric units are being used?');
+    throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${string}'. Are you sure metric units are being used?`);
   }
 }
 
@@ -73,9 +73,8 @@ function _normalizeUnits(string) {
     success: false
   };
   
-  console.log('_normalizeUnits: string = %s, typeof(string) = %s', string, typeof(string));
   if (typeof(string) !== 'string') {
-    throw new Error(`'${string}' must be of type string but is of type '${typeof(string)}'.`);
+    throw new Error(`'${JSON.stringify(string)}' must be of type string but is of type '${typeof(string)}'.`);
   }
   
   string = string.split(' ').join('');
@@ -93,17 +92,17 @@ function _normalizeUnits(string) {
   }
   
   const expressionResult = _parseExpression(string);
-  console.log('_normalizeUnits: expressionResult = %s', expressionResult);
+  console.log(`_normalizeUnits: expressionResult = ${JSON.stringify(expressionResult)}`);
   
   if (expressionResult.success) {
     const magnitude = expressionResult.result.magnitude;
     const exponents = expressionResult.result.exponents;
-    
+
     const units = [ '10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol', '%', 'ppm', 'ppb', 'ppt', 'ppq' ].filter((unit) => {
       return exponents.hasOwnProperty(unit);
     });
     
-    const magnitudeString = magnitude.toString() + (exponents['10'] !== 0
+    const magnitudeString = JSON.stringify(magnitude) + (exponents['10'] !== 0
       ? '*10^' + exponents['10']
       : '');
     const unitsString = units.filter((unit) => {
@@ -113,7 +112,8 @@ function _normalizeUnits(string) {
         ? '^' + exponents[unit]
         : '');
     }).join('*');
-    
+    console.log(`_normalizeUnits: magnitudeString = ${magnitudeString}`);
+
     return {
       consumed: expressionResult.consumed,
       rest: expressionResult.rest,
@@ -144,7 +144,7 @@ function _parseExpression(string) {
   };
   
   const magnitudeResult = _parseMagnitude(string);
-  console.log('_parseExpression: magnitudeResult = %s', magnitudeResult);
+  console.log(`_parseExpression: magnitudeResult = ${JSON.stringify(magnitudeResult)}`);
   
   if (magnitudeResult.success || magnitudeResult.consumed === '') {
     if (magnitudeResult.rest) {
@@ -158,7 +158,7 @@ function _parseExpression(string) {
           : 1);
       
       const termResult = _parseTerm(rest);
-      console.log('_parseExpression: termResult = %s', termResult);
+      console.log(`_parseExpression: termResult = ${JSON.stringify(termResult)}`);
       
       const consumed = magnitudeResult.consumed + operator + termResult.consumed;
       
@@ -173,11 +173,11 @@ function _parseExpression(string) {
           exponents['10'] += magnitudeResult.result.exponent;
         }
 
+        // FIXME: This is the wrong thing to do for '/'.
         return {
           consumed: consumed,
           rest: termResult.rest,
           result: {
-            // FIXME: This is the wrong thing to do for '/'.
             magnitude: magnitudeResult.success
                 ? termResult.result.conversion(magnitudeResult.result.significand)
                 : NaN,
@@ -221,7 +221,7 @@ function _parseMagnitude(string) {
   };
   
   const significandResult = _parseSignificand(string);
-  console.log('_parseMagnitude: significandResult = %s', significandResult);
+  console.log(`_parseMagnitude: significandResult = ${JSON.stringify(significandResult)}`);
   
   if (significandResult.success) {
     const operator = significandResult.rest.indexOf('*10^') === 0
@@ -231,7 +231,7 @@ function _parseMagnitude(string) {
         : undefined;
     if (operator !== undefined) {
       const exponentResult = _parseExponent(significandResult.rest.substring(operator.length));
-      console.log('_parseMagnitude: exponentResult = %s', exponentResult);
+      console.log(`_parseMagnitude: exponentResult = ${JSON.stringify(exponentResult)}`);
       
       const consumed = significandResult.consumed + operator + exponentResult.consumed;
       
@@ -286,15 +286,15 @@ function _parseTerm(string) {
   };
   
   const openParenthesisResult = _parseChar(string, '(');
-  console.log('_parseTerm: openParenthesisResult = %s', openParenthesisResult);
+  console.log(`_parseTerm: openParenthesisResult = ${JSON.stringify(openParenthesisResult)}`);
   
   if (openParenthesisResult.success) {
     const termBetweenParenthesesResult = _parseTerm(openParenthesisResult.rest);
-    console.log('_parseTerm: termBetweenParenthesesResult = %s', termBetweenParenthesesResult);
+    console.log(`_parseTerm: termBetweenParenthesesResult = ${JSON.stringify(termBetweenParenthesesResult)}`);
     
     if (termBetweenParenthesesResult.success) {
       const closeParenthesisResult = _parseChar(termBetweenParenthesesResult.rest, ')');
-      console.log('_parseTerm: closeParenthesisResult = %s', closeParenthesisResult);
+      console.log(`_parseTerm: closeParenthesisResult = ${JSON.stringify(closeParenthesisResult)}`);
       
       const consumedInclusiveBetweenParentheses = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed + closeParenthesisResult.consumed;
       
@@ -313,14 +313,14 @@ function _parseTerm(string) {
     }
   } else {
     const factorResult = _parseFactor(string);
-    console.log('_parseTerm: factorResult = %s', factorResult);
+    console.log(`_parseTerm: factorResult = ${JSON.stringify(factorResult)}`);
     
     if (factorResult.success) {
       const factorExponents = factorResult.result.exponents;
       const factorConversion = factorResult.result.conversion;
       
       const asterixTermResult = _parseAsterixTerm(factorResult.rest);
-      console.log('_parseTerm: asterixTermResult = %s', asterixTermResult);
+      console.log(`_parseTerm: asterixTermResult = ${JSON.stringify(asterixTermResult)}`);
       
       const consumedAroundAsterix = factorResult.consumed + asterixTermResult.consumed;
         
@@ -346,7 +346,7 @@ function _parseTerm(string) {
         };
       } else {
         const slashTermResult = _parseSlashTerm(factorResult.rest);
-        console.log('_parseTerm: slashTermResult = %s', slashTermResult);
+        console.log(`_parseTerm: slashTermResult = ${JSON.stringify(slashTermResult)}`);
         
         const consumedAroundSlash = factorResult.consumed + slashTermResult.consumed;
           
@@ -404,11 +404,11 @@ function _parseCharTerm(string, char) {
   };
   
   const charResult = _parseChar(string, char);
-  console.log('_parseCharTerm: charResult = %s', charResult);
+  console.log(`_parseCharTerm: charResult = ${JSON.stringify(charResult)}`);
   
   if (charResult.success) {
     const termResult = _parseTerm(charResult.rest);
-    console.log('_parseCharTerm: termResult = %s', termResult);
+    console.log(`_parseCharTerm: termResult = ${JSON.stringify(termResult)}`);
     
     const consumed = charResult.consumed + termResult.consumed;
     
@@ -440,17 +440,17 @@ function _parseFactor(string) {
   };
   
   const baseResult = _parseBase(string);
-  console.log('_parseFactor: baseResult = %s', baseResult);
+  console.log(`parseFactor: baseResult = ${JSON.stringify(baseResult)}`);
   
   if (baseResult.success) {
     const exponents = baseResult.result.exponents;
     
     const caretResult = _parseChar(baseResult.rest, '^');
-    console.log('_parseFactor: caretResult = %s', caretResult);
+    console.log(`_parseFactor: caretResult = ${JSON.stringify(caretResult)}`);
     
     if (caretResult.success) {
       const exponentResult = _parseExponent(caretResult.rest);
-      console.log('_parseFactor: exponentResult = %s', exponentResult);
+      console.log(`_parseFactor: exponentResult = ${JSON.stringify(exponentResult)}`);
       
       const consumedAroundCaret = baseResult.consumed + caretResult.consumed + exponentResult.consumed;
       
@@ -792,11 +792,11 @@ function _parseInteger(string) {
   };
   
   const plusResult = _parseChar(string, '+');
-  console.log('_parseInteger: plusResult = %s', plusResult);
+  console.log(`_parseInteger: plusResult = ${JSON.stringify(plusResult)}`);
   
   if (plusResult.success) {
     const integerAfterPlusResult = _parseInteger(plusResult.rest);
-    console.log('_parseInteger: integerAfterPlusResult = %s', integerAfterPlusResult);
+    console.log(`_parseInteger: integerAfterPlusResult = ${JSON.stringify(integerAfterPlusResult)}`);
     
     const consumedInclusiveAfterPlus = plusResult.consumed + integerAfterPlusResult.consumed;
     
@@ -812,11 +812,11 @@ function _parseInteger(string) {
     }
   } else {
     const minusResult = _parseChar(string, '-');
-    console.log('_parseInteger: minusResult = %s', minusResult);
+    console.log(`_parseInteger: minusResult = ${JSON.stringify(minusResult)}`);
     
     if (minusResult.success) {
       const integerAfterMinusResult = _parseInteger(minusResult.rest);
-      console.log('_parseInteger: integerAfterMinusResult = %s', integerAfterMinusResult);
+      console.log(`_parseInteger: integerAfterMinusResult = ${JSON.stringify(integerAfterMinusResult)}`);
       
       const consumedInclusiveAfterMinus = minusResult.consumed + integerAfterMinusResult.consumed;
       
@@ -832,7 +832,7 @@ function _parseInteger(string) {
       }
     } else {
       const digitsResult = _parseDigits(string);
-      console.log('_parseInteger: digitsResult = %s', digitsResult);
+      console.log(`_parseInteger: digitsResult = ${JSON.stringify(digitsResult)}`);
       
       if (digitsResult.success) {
         return digitsResult;
@@ -859,11 +859,11 @@ function _parseDecimal(string) {
   };
   
   const plusResult = _parseChar(string, '+');
-  console.log('_parseDecimal: plusResult = %s', plusResult);
+  console.log(`_parseDecimal: plusResult = ${JSON.stringify(plusResult)}`);
   
   if (plusResult.success) {
     const decimalAfterPlusResult = _parseDecimal(plusResult.rest);
-    console.log('_parseDecimal: decimalAfterPlusResult = %s', decimalAfterPlusResult);
+    console.log(`_parseDecimal: decimalAfterPlusResult = ${JSON.stringify(decimalAfterPlusResult)}`);
     
     const consumedInclusiveAfterPlus = plusResult.consumed + decimalAfterPlusResult.consumed;
     
@@ -879,11 +879,11 @@ function _parseDecimal(string) {
     }
   } else {
     const minusResult = _parseChar(string, '-');
-    console.log('_parseDecimal: minusResult = %s', minusResult);
+    console.log(`_parseDecimal: minusResult = ${JSON.stringify(minusResult)}`);
     
     if (minusResult.success) {
       const decimalAfterMinusResult = _parseDecimal(minusResult.rest);
-      console.log('_parseDecimal: decimalAfterMinusResult = %s', decimalAfterMinusResult);
+      console.log(`_parseDecimal: decimalAfterMinusResult = ${JSON.stringify(decimalAfterMinusResult)}`);
       
       const consumedInclusiveAfterMinus = minusResult.consumed + decimalAfterMinusResult.consumed;
       
@@ -899,10 +899,10 @@ function _parseDecimal(string) {
       }
     } else {
       const digitsResult = _parseDigits(string);
-      console.log('_parseDecimal: digitsResult = %s', digitsResult);
+      console.log(`_parseDecimal: digitsResult = ${JSON.stringify(digitsResult)}`);
       
       const dotDigitsResult = _parseDotDigits(digitsResult.rest);
-      console.log('_parseDecimal: dotDigitsResult = %s', dotDigitsResult);
+      console.log(`_parseDecimal: dotDigitsResult = ${JSON.stringify(dotDigitsResult)}`);
       
       if (dotDigitsResult.success) {
         const consumedAroundPeriod = digitsResult.consumed + dotDigitsResult.consumed;          
@@ -932,11 +932,11 @@ function _parseDotDigits(string) {
   };
   
   const periodResult = _parseChar(string, '.');
-  console.log('_parseDotDigits: periodResult = %s', periodResult);
+  console.log(`_parseDotDigits: periodResult = ${JSON.stringify(periodResult)}`);
   
   if (periodResult.success) {
     const digitsAfterPeriodResult = _parseDigits(periodResult.rest);
-    console.log('_parseDotDigits: digitsAfterPeriodResult = %s', digitsAfterPeriodResult);
+    console.log(`_parseDotDigits: digitsAfterPeriodResult = ${JSON.stringify(digitsAfterPeriodResult)}`);
     
     const consumedAfterPeriod = periodResult.consumed + digitsAfterPeriodResult.consumed;          
     
@@ -957,25 +957,27 @@ function _parseDotDigits(string) {
  * <digits> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  **/
 function _parseDigits(string) {
-  const result = {
+  const failureResult = {
     consumed: '',
     rest: string,
     success: false
   };
   
-  const digits = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ];
-
   var i;
   for (i = 0; '0' <= string.charAt(i) && string.charAt(i) <= '9'; ++i);
-  
+
   if (i !== 0) {
-    result.consumed = string.substring(0, i);
-    result.rest = string.substring(i);
-    result['result'] = parseInt(result.consumed);
-    result.success = true;
+    const consumed = string.substring(0, i);
+
+    return {
+      consumed: consumed,
+      rest: string.substring(i),
+      result: parseInt(consumed),
+      success: true
+    };
   }
   
-  return result;
+  return failureResult;
 }
 
 function _parseChar(string, char) {  

@@ -893,33 +893,6 @@ test('_parseFactor should succeed with both base and exponent', t => {
   });
 });
 
-test('_parseCharUnits should fail with nothing after char', t => {
-  const observed = SIParser._parseCharUnits('?', '?');
-
-  t.deepEqual(observed, {
-    consumed: '?',
-    rest: '?',
-    success: false
-  });
-});
-
-test('_parseCharUnits should pass with term after char', t => {
-  const observed = SIParser._parseCharUnits('?g', '?');
-
-  t.deepEqual(observed, {
-    consumed: '?g',
-    rest: '',
-    result: {
-      conversion: observed.result.conversion,
-      exponents: {
-        10: 0,
-        g: 1
-      }
-    },
-    success: true
-  });
-});
-
 test('_parseTerm should parse factor times factor', t => {
   const observed = SIParser._parseTerm('g*m');
 
@@ -999,7 +972,7 @@ test('_parseTerm should fail with failed multiplier', t => {
 
   t.deepEqual(observed, {
     consumed: '%*',
-    rest: '*1ppm',
+    rest: '1ppm',
     success: false
   });
 });
@@ -1009,7 +982,7 @@ test('_parseTerm should fail with failed divisor', t => {
 
   t.deepEqual(observed, {
     consumed: '%/',
-    rest: '/1ppm',
+    rest: '1ppm',
     success: false
   });
 });

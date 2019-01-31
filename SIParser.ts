@@ -93,14 +93,13 @@ function _normalizeUnits(string) {
   console.log(`_normalizeUnits: expressionResult = ${JSON.stringify(expressionResult)}`);
   
   if (expressionResult.success) {
-    const magnitude = expressionResult.result.magnitude;
     const exponents = expressionResult.result.exponents;
 
     const units = ['10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol'].filter((unit) => {
       return exponents.hasOwnProperty(unit);
     });
     
-    const magnitudeString = JSON.stringify(magnitude) + (exponents['10'] !== 0
+    const magnitudeString = JSON.stringify(expressionResult.result.magnitude) + (exponents['10'] !== 0
         ? '*10^' + exponents['10']
         : '');
     const unitsString = units.filter((unit) => {
@@ -161,13 +160,14 @@ function _parseExpression(string) {
       const consumed = magnitudeResult.consumed + operator + termResult.consumed;
       
       if (termResult.success) {
+        const termExponents = termResult.result.exponents;
         const exponents = operator === '/'
-            ? Object.keys(termResult.result.exponents).reduce((accum, elt) => {
+            ? Object.keys(termExponents).reduce((accum, elt) => {
               accum[elt] = -accum[elt];
 
               return accum;
-            }, termResult.result.exponents)
-            : termResult.result.exponents;
+            }, termExponents)
+            : termExponents;
         if (magnitudeResult.success) {
           exponents['10'] += magnitudeResult.result.exponent;
         }
@@ -336,9 +336,10 @@ function _parseTerm(string) {
   console.log(`_parseTerm: unitsResult = ${JSON.stringify(unitsResult)}`);
   
   if (unitsResult.success) {
-    const result = unitsResult;
+    let result = {
+      ...unitsResult
+    };
 
-    const resultExponents = result.result.exponents;
     const resultConversion = result.result.conversion;
 
     let rest = result.rest;
@@ -354,29 +355,28 @@ function _parseTerm(string) {
       if (unitsResult.success) {
         rest = unitsResult.rest;
 
-        const unitsExponents = unitsResult.result.exponents;
         const unitsConversion = unitsResult.result.conversion;
 
-        const exponentsAfterOperator = Object.keys(unitsExponents).reduce((accum, elt) => {
-          console.log(`_parseTerm: accum = ${JSON.stringify(accum)}, unitsExponents[${elt}] = ${unitsExponents[elt]}`);
-
-          accum[elt] = (accum[elt] || 0) + (operator === '*' ? 1 : -1) * unitsExponents[elt];
+        const exponentsAfterOperator = Object.keys(unitsResult.result.exponents).reduce((accum, elt) => {
+          accum[elt] = (accum[elt] || 0) + (operator === '*' ? 1 : -1) * unitsResult.result.exponents[elt];
 
           return accum;
-        }, resultExponents);
+        }, result.result.exponents);
 
-        result.consumed = consumed;
-        result.rest = rest;
-        result.result = {
-          exponents: exponentsAfterOperator,
-          conversion: (magnitude) => {
-            return resultConversion(unitsConversion(magnitude));
-          }
+        result = {
+          consumed: consumed,
+          rest: rest,
+          result: {
+            exponents: exponentsAfterOperator,
+            conversion: (magnitude) => {
+              return resultConversion(unitsConversion(magnitude));
+            }
+          },
+          success: true
         };
-        result.success = true;
       } else {
-        failureResult.consumed = consumed;
-        failureResult.rest = unitsResult.rest;
+        failureResult['consumed'] = consumed;
+        failureResult['rest'] = unitsResult.rest;
 
         return failureResult;
       }
@@ -404,8 +404,6 @@ function _parseFactor(string) {
   console.log(`parseFactor: baseResult = ${JSON.stringify(baseResult)}`);
   
   if (baseResult.success) {
-    const baseResultExponents = baseResult.result.exponents;
-    
     const caretResult = _parseChar(baseResult.rest, '^');
     console.log(`_parseFactor: caretResult = ${JSON.stringify(caretResult)}`);
     
@@ -416,14 +414,13 @@ function _parseFactor(string) {
       const consumedAroundCaret = baseResult.consumed + caretResult.consumed + exponentResult.consumed;
       
       if (exponentResult.success) {
-        const exponent = exponentResult.result;
-        const exponents = Object.keys(baseResultExponents).reduce((accum, elt) => {
-          accum[elt] *= exponent;
+        const exponents = Object.keys(baseResult.result.exponents).reduce((accum, elt) => {
+          accum[elt] *= exponentResult.result;
 
           return accum;
-        }, baseResultExponents);
-        
-        const result = {
+        }, baseResult.result.exponents);
+
+        return {
           consumed: consumedAroundCaret,
           rest: exponentResult.rest,
           result: {
@@ -432,8 +429,6 @@ function _parseFactor(string) {
           },
           success: true
         };
-      
-        return result;
       } else {
         failureResult['consumed'] = consumedAroundCaret;
       }
@@ -718,38 +713,33 @@ function _parseBase(string) {
   if (match.length > 0) {
     const prefix = match[0].prefix;
     const unit = match[0].unit;
-    const consumed = prefix + unit;
-    
-    const result = {
+    const consumed = `${prefix}${unit}`;
+
+    const tensExponent = {10: prefixes[prefix]};
+    const passThroughConversion = (magnitude) => {
+      return magnitude;
+    };
+
+    return {
       consumed: consumed,
       rest: string.substring(consumed.length),
-      result: {
-        exponents: {
-          10: prefixes[prefix]
-        },
-        conversion: (magnitude) => {
-          return magnitude;
-        }
-      },
+      result: Object.keys(derivedUnits).indexOf(unit) !== -1
+          ? {
+            exponents: Object.keys(derivedUnits[unit].exponents).reduce((accum, elt) => {
+              accum[elt] = (accum[elt] || 0) + derivedUnits[unit].exponents[elt];
+
+              return accum;
+            }, tensExponent),
+            conversion: derivedUnits[unit].conversion || passThroughConversion
+          } : {
+            exponents: {
+              ...tensExponent,
+              [unit]: 1
+            },
+            conversion: passThroughConversion
+          },
       success: true
     };
-    
-    if (Object.keys(derivedUnits).indexOf(unit) !== -1) {
-      result.result.exponents = Object.keys(derivedUnits[unit].exponents).reduce((accum, elt) => {
-        accum[elt] = (accum[elt] || 0) + derivedUnits[unit].exponents[elt];
-
-        return accum;
-      }, result.result.exponents);
-
-      result.result.conversion = derivedUnits[unit].conversion ||
-        function (magnitude) {
-          return magnitude;
-        };
-    } else {
-      result.result.exponents[unit] = 1;
-    }
-    
-    return result;
   } else {
     failureResult['consumed'] = '';
   }
@@ -994,6 +984,5 @@ module.exports = {
   _parseMagnitude: _parseMagnitude,
   _parseSignificand: _parseSignificand,
   _parseTerm: _parseTerm,
-  _parseUnits: _parseUnits,
-  normalizeUnits: normalizeUnits
-}
+  _parseUnits: _parseUnits
+};

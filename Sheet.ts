@@ -1,5 +1,5 @@
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  const ui = SpreadsheetApp.getUi();
   // Or DocumentApp or FormApp.
   ui.createMenu('Science Test')
       .addItem('Recalculate Points', 'recalculatePoints')
@@ -25,15 +25,15 @@ function _recalculatePoints(gradersEntriesSheet) {
   const height = dataRange.getHeight();
 
   const pointFormulaRanges = Array.apply(null, Array(width))
-      .map(function (_, i) {
+      .map((_, i) => {
         return i + 1;
-      }).filter(function (c) {
+      }).filter((c) => {
         return gradersEntriesSheet.getRange(answersHeaderRow, c).getValue().indexOf('Points') !== -1;
       })
-      .map(function (c) {
+      .map((c) => {
         return gradersEntriesSheet.getRange(takerAnswersStartRow, c, height - takerAnswersStartRow + 1, 1);
       });
-  pointFormulaRanges.forEach(function (pointFormulaRange) {
+  pointFormulaRanges.forEach((pointFormulaRange) => {
     console.log(`_recalculatePoints: pointFormulaRange = ${pointFormulaRange}`);
     
     const pointFormulae = pointFormulaRange.getFormulas();
@@ -79,7 +79,7 @@ function _createKataGradersEntriesSheetFrom(fromSheet) {
   // Before cloning the sheet, delete any previous copy.
   const old = spreadsheet.getSheetByName(kataGradersEntriesName);
   if (old) {
-    old.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(function (protection) {
+    old.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach((protection) => {
       protection.remove();
     });
     
@@ -161,7 +161,7 @@ function _hideSheetsNotUsedDirectlyByGraders(spreadsheet) {
   const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
-      .forEach(function (sheetName) {
+      .forEach((sheetName) => {
         const sheet = spreadsheet.getSheetByName(sheetName);
         
         if (sheet !== null) {
@@ -174,7 +174,7 @@ function _showSheetsNotUsedDirectlyByGraders(spreadsheet) {
   const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
-      .forEach(function (sheetName) {
+      .forEach((sheetName) => {
         const sheet = spreadsheet.getSheetByName(sheetName);
         
         if (sheet !== null) {
@@ -193,7 +193,7 @@ function _reorderSheets(spreadsheet) {
       'Ana Graders Entries',
       'Grader Instructions',
       'Creator Instructions' ];
-  sheetNames.forEach(function (sheetName) {
+  sheetNames.forEach((sheetName) => {
     const sheet = spreadsheet.getSheetByName(sheetName);
     
     if (sheet !== null) {
@@ -211,10 +211,10 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
   const height = dataRange.getHeight();
 
   const unprotectedRanges = _sequence(1, width)
-      .filter(function (c) {
+      .filter((c) => {
         return gradersEntriesSheet.getRange(4, c).getValue().indexOf('Answer') !== -1;
       }).concat([1])
-      .map(function (c) {
+      .map((c) => {
         return gradersEntriesSheet.getRange(6, c, height - 5, 1);
       });
   gradersEntriesSheet
@@ -222,9 +222,9 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
       .setUnprotectedRanges(unprotectedRanges)
       .setWarningOnly(true);
   
-  unprotectedRanges.forEach(function (unprotectedRange) {
+  unprotectedRanges.forEach((unprotectedRange) => {
     const validationRules = _sequence(1, unprotectedRange.getHeight())
-        .map(function (r) {
+        .map((r) => {
           const unprotectedCell = unprotectedRange.getCell(r, 1);
           
           return [SpreadsheetApp.newDataValidation()
@@ -240,7 +240,7 @@ function _protectNonDataEntryCells(gradersEntriesSheet) {
 
 function _sequence(start, end) {
   return Array.apply(null, Array(end - start + 1))
-      .map(function (_, i) {
+      .map((_, i) => {
         return start + i;
       });
 }

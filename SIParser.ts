@@ -921,16 +921,14 @@ function _parseDigits(string) {
     rest: string,
     success: false
   };
-  
-  let i;
-  for (i = 0; '0' <= string.charAt(i) && string.charAt(i) <= '9'; ++i);
 
-  if (i !== 0) {
-    const consumed = string.substring(0, i);
+  const nDigits = string.match(/^[0-9]*/g)[0].length;
+  if (nDigits !== 0) {
+    const consumed = string.substring(0, nDigits);
 
     return {
       consumed: consumed,
-      rest: string.substring(i),
+      rest: string.substring(nDigits),
       result: parseInt(consumed),
       success: true
     };

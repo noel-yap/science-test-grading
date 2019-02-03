@@ -1,4 +1,4 @@
-var __Number__ = __require('./Number.ts', () => {
+let __Number__ = __require('./Number.ts', () => {
   return {
     _numberOfSignificantFigures: _numberOfSignificantFigures,
     _round: _round,
@@ -6,17 +6,17 @@ var __Number__ = __require('./Number.ts', () => {
     _isNaN: _isNaN
   };
 });
-var __Properties__ = __require('./Properties.ts', () => {
+let __Properties__ = __require('./Properties.ts', () => {
   return {
     _getGradingProperties: _getGradingProperties
   };
 });
-var __ScientificNotation__ = __require('./ScientificNotation.ts', () => {
+let __ScientificNotation__ = __require('./ScientificNotation.ts', () => {
   return {
     _sciToNum: _sciToNum
   };
 });
-var __SIParser__ = __require('./SIParser.ts', () => {
+let __SIParser__ = __require('./SIParser.ts', () => {
   return {
     _normalizeUnits: _normalizeUnits
   };
@@ -40,30 +40,32 @@ function grade(points, observed, expected) {
     observed = [[observed]];
   }
 
-  return observed.map(function (row) {
-    return row.map(function (cell) {
-      return expected.map(function (e) {
+  return observed.map((row) => {
+    return row.map((cell) => {
+      return expected.map((e) => {
         try {
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}`);
           const result = _grade(gradingProperties, points, cell, e);
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}, _grade = ${result}`);
-          
+
           return result;
         } catch(e) {
           console.log(`grade: e = ${e}`);
           
           return [0.0, e.fileName + ':' + e.lineNumber + ': ' + e.toString()];
         }
-      }).reduce(function (accum, elt) {
-        console.log(`grade: accum = ${accum}, elt = ${elt}`);
-        return (accum[1] === undefined || accum[1].toString().indexOf('Error:') === 0 || elt[0] > accum[0])
-            ? elt
+      }).reduce((accum, cellGradeVsExpected) => {
+        const [maxGrade, maxGradeReason] = accum;
+
+        console.log(`grade: accum = ${accum}, elt = ${cellGradeVsExpected}`);
+        return (maxGradeReason === undefined || maxGradeReason.toString().indexOf('Error:') === 0 || cellGradeVsExpected[0] > maxGrade)
+            ? cellGradeVsExpected
             : accum;
       }, [-points, undefined]);
     });
-  }).reduce(function (accum, elt) {
-    return accum.concat(elt);
-  }, []);  
+  }).reduce((accum, rowGrades) => {
+    return accum.concat(rowGrades);
+  }, []);
 }
 
 /**
@@ -87,57 +89,59 @@ function grade(points, observed, expected) {
  * Else if incorrect units:
  *   .1875 of full credit off
  **/
-function _grade(gradingProperties, points, observed, expected) {  
+function _grade(gradingProperties, points, observed, expected) {
   if (Array.isArray(expected[0])) {
     expected = expected[0];
   }
-  
-  console.log(`_grade: observed = ${observed}, expected = ${expected}`);
-  
-  var minExpectedNormalizedMagnitude;
-  var minExpectedNormalizedUnits;
-  var minExpectedSignificantFigures;
-  var maxExpectedNormalizedMagnitude;
-  var maxExpectedNormalizedUnits;
-  var maxExpectedSignificantFigures;
-  if (Array.isArray(expected)) {
-    const minExpected = expected[0];
-    const maxExpected = expected[expected.length - 1];
-    
-    console.log(`_grade: minExpected = ${minExpected}`);
-    const minExpectedParts = _getParts(minExpected);
-    minExpectedNormalizedMagnitude = minExpectedParts.normalizedMagnitude;
-    minExpectedNormalizedUnits = minExpectedParts.normalizedUnits;
-    minExpectedSignificantFigures = minExpectedParts.significantFigures;
 
-    console.log(`_grade: maxExpected = ${maxExpected}`);
-    const maxExpectedParts = _getParts(maxExpected);
-    maxExpectedNormalizedMagnitude = maxExpectedParts.normalizedMagnitude;
-    maxExpectedNormalizedUnits = maxExpectedParts.normalizedUnits;
-    maxExpectedSignificantFigures = maxExpectedParts.significantFigures;
-  } else {
-    const expectedParts = _getParts(expected);
-    
-    minExpectedNormalizedMagnitude = expectedParts.normalizedMagnitude;
-    minExpectedNormalizedUnits = expectedParts.normalizedUnits;
-    minExpectedSignificantFigures = expectedParts.significantFigures;
-    
-    maxExpectedNormalizedMagnitude = expectedParts.normalizedMagnitude;
-    maxExpectedNormalizedUnits = expectedParts.normalizedUnits;
-    maxExpectedSignificantFigures = expectedParts.significantFigures;
-  }
-  
+  console.log(`_grade: observed = ${observed}, expected = ${expected}`);
+
+  const [
+    minExpectedNormalizedMagnitude,
+    minExpectedNormalizedUnits,
+    minExpectedSignificantFigures,
+    maxExpectedNormalizedMagnitude,
+    maxExpectedNormalizedUnits,
+    maxExpectedSignificantFigures] = (Array.isArray(expected)
+      ? () => {
+        const minExpected = expected[0];
+        const maxExpected = expected[expected.length - 1];
+        console.log(`_grade: minExpected = ${minExpected}, maxExpected = ${maxExpected}`);
+
+        const minExpectedParts = _getParts(minExpected);
+        const maxExpectedParts = _getParts(maxExpected);
+
+        return [
+            minExpectedParts.normalizedMagnitude,
+            minExpectedParts.normalizedUnits,
+            minExpectedParts.significantFigures,
+            maxExpectedParts.normalizedMagnitude,
+            maxExpectedParts.normalizedUnits,
+            maxExpectedParts.significantFigures];
+      }
+      : () => {
+        const expectedParts = _getParts(expected);
+
+        return [
+            expectedParts.normalizedMagnitude,
+            expectedParts.normalizedUnits,
+            expectedParts.significantFigures,
+            expectedParts.normalizedMagnitude,
+            expectedParts.normalizedUnits,
+            expectedParts.significantFigures];
+      })();
+
   const observedParts = _getParts(observed);
   const observedNormalizedMagnitude = observedParts.normalizedMagnitude;
   const observedNormalizedUnits = observedParts.normalizedUnits;
   const observedSignificantFigures = observedParts.significantFigures;
-  
+
   if (minExpectedNormalizedUnits !== maxExpectedNormalizedUnits) {
     throw new Error(`Normalized expected units must be the same but were '${minExpectedNormalizedUnits}' and '${maxExpectedNormalizedUnits}'.`);
   }
-  
+
   const expectedNormalizedUnits = minExpectedNormalizedUnits;
-  
+
   const closestExpectedNormalizedMagnitude = Math.abs(observedNormalizedMagnitude - minExpectedNormalizedMagnitude) < Math.abs(observedNormalizedMagnitude - maxExpectedNormalizedMagnitude)
       ? minExpectedNormalizedMagnitude
       : maxExpectedNormalizedMagnitude;
@@ -145,15 +149,15 @@ function _grade(gradingProperties, points, observed, expected) {
   const minExpectedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(minExpectedNormalizedMagnitude);
   const maxExpectedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(maxExpectedNormalizedMagnitude);
   const observedNormalizedOrderOfMagnitude = __Number__._orderOfMagnitude(observedNormalizedMagnitude);
-  
+
   const minExpectedNormalizedMagnitudeAdjusted = _adjustOrderOfMagnitude(minExpectedNormalizedMagnitude, minExpectedNormalizedOrderOfMagnitude);
   const maxExpectedNormalizedMagnitudeAdjusted = _adjustOrderOfMagnitude(maxExpectedNormalizedMagnitude, maxExpectedNormalizedOrderOfMagnitude);
   const observedNormalizedMagnitudeAdjusted = _adjustOrderOfMagnitude(observedNormalizedMagnitude, observedNormalizedOrderOfMagnitude);
-  
+
   const closestExpectedNormalizedMagnitudeAdjusted = Math.abs(observedNormalizedMagnitudeAdjusted - minExpectedNormalizedMagnitudeAdjusted) < Math.abs(observedNormalizedMagnitudeAdjusted - maxExpectedNormalizedMagnitudeAdjusted)
       ? minExpectedNormalizedMagnitudeAdjusted
       : maxExpectedNormalizedMagnitudeAdjusted;
-  
+
   const expectedSignificantFigures = maxExpectedSignificantFigures > minExpectedSignificantFigures
       ? maxExpectedSignificantFigures
       : minExpectedSignificantFigures;
@@ -162,7 +166,7 @@ function _grade(gradingProperties, points, observed, expected) {
       : observedSignificantFigures > expectedSignificantFigures
       ? 1
       : 0;
-  
+
   console.log(`_grade: expected = ${expected}`);
   console.log(`_grade: observed = ${observed}`);
 
@@ -170,27 +174,27 @@ function _grade(gradingProperties, points, observed, expected) {
   console.log(`_grade: maxExpectedNormalizedMagnitude = ${maxExpectedNormalizedMagnitude}`);
   console.log(`_grade: closestExpectedNormalizedMagnitude = ${closestExpectedNormalizedMagnitude}`);
   console.log(`_grade: observedNormalizedMagnitude = ${observedNormalizedMagnitude}`);
-  
+
   console.log(`_grade: minExpectedNormalizedOrderOfMagnitude = ${minExpectedNormalizedOrderOfMagnitude}`);
   console.log(`_grade: maxExpectedNormalizedOrderOfMagnitude = ${maxExpectedNormalizedOrderOfMagnitude}`);
   console.log(`_grade: observedNormalizedOrderOfMagnitude = ${observedNormalizedOrderOfMagnitude}`);
-  
+
   console.log(`_grade: minExpectedNormalizedMagnitudeAdjusted = ${minExpectedNormalizedMagnitudeAdjusted}`);
   console.log(`_grade: maxExpectedNormalizedMagnitudeAdjusted = ${maxExpectedNormalizedMagnitudeAdjusted}`);
   console.log(`_grade: closestExpectedNormalizedMagnitudeAdjusted = ${closestExpectedNormalizedMagnitudeAdjusted}`);
   console.log(`_grade: observedNormalizedMagnitudeAdjusted = ${observedNormalizedMagnitudeAdjusted}`);
-  
+
   console.log(`_grade: minExpectedSignificantFigures = ${minExpectedSignificantFigures}`);
   console.log(`_grade: maxExpectedSignificantFigures = ${maxExpectedSignificantFigures}`);
   console.log(`_grade: expectedSignificantFigures = ${expectedSignificantFigures}`);
   console.log(`_grade: observedSignificantFigures = ${observedSignificantFigures}`);
   console.log(`_grade: significantFiguresCmp = ${significantFiguresCmp}`);
-  
+
   console.log(`_grade: minExpectedNormalizedUnits = ${minExpectedNormalizedUnits}`);
   console.log(`_grade: maxExpectedNormalizedUnits = ${maxExpectedNormalizedUnits}`);
   console.log(`_grade: expectedNormalizedUnits = ${expectedNormalizedUnits}`);
   console.log(`_grade: observedNormalizedUnits = ${observedNormalizedUnits}`);
-  
+
   const correctOrderOfMagnitude = minExpectedNormalizedOrderOfMagnitude <= observedNormalizedOrderOfMagnitude && observedNormalizedOrderOfMagnitude <= maxExpectedNormalizedOrderOfMagnitude;
   const withinAdjustedExpectedRange = minExpectedNormalizedMagnitudeAdjusted <= observedNormalizedMagnitudeAdjusted && observedNormalizedMagnitudeAdjusted <= maxExpectedNormalizedMagnitudeAdjusted;
   const closeToAdjustedExpected = Math.abs(observedNormalizedMagnitudeAdjusted - closestExpectedNormalizedMagnitudeAdjusted) / closestExpectedNormalizedMagnitudeAdjusted < .01;
@@ -220,7 +224,7 @@ function _grade(gradingProperties, points, observed, expected) {
       : observedNormalizedUnits !== expectedNormalizedUnits
       ? [[gradingProperties['incorrect-units'], 'Incorrect units.']]
       : [[0.0, undefined]];
-  
+
   console.log(`_grade: magnitudeCredit = ${magnitudeCredit}`);
   console.log(`_grade: unitsCredit = ${unitsCredit}`);
 
@@ -229,9 +233,9 @@ function _grade(gradingProperties, points, observed, expected) {
   const result = []
       .concat(noExpectedMagnitude ? [] : magnitudeCredit)
       .concat(noExpectedUnits ? [] : unitsCredit)
-      .filter(function (elt) {
+      .filter((elt) => {
         return elt[1] !== undefined;
-      }).reduce(function (accum, elt) {
+      }).reduce((accum, elt) => {
         return [accum[0] + elt[0], [ accum[1], elt[1] ].join(' ')];
       }, [0.0, '']);
   console.log(`_grade: result = ${result}`);
@@ -245,7 +249,7 @@ function _grade(gradingProperties, points, observed, expected) {
   if (observed === '') {
     result[1] = '';
   }
-  
+
   return result;
 }
 

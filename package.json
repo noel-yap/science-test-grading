@@ -10,6 +10,7 @@
     "@types/google-apps-script": "0.0.36",
     "growl": ">=1.10.0",
     "log-suppress": "^1.0.3",
+    "nim": "^1.4.0",
     "npm": "^6.7.0"
   },
   "devDependencies": {

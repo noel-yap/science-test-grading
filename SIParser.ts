@@ -323,71 +323,56 @@ function _parseUnits(string) {
 }
 
 /**
- * <term> ::= <units> <asterix-units>
- *            | <units> <slash-units>
+ * <term> ::= <units> <asterix-units>...
+ *            | <units> <slash-units>...
  **/
 function _parseTerm(string) {
-  const failureResult = {
-    rest: string,
-    success: false
-  };
-  
-  const unitsResult = _parseUnits(string);
-  console.log(`_parseTerm: unitsResult = ${JSON.stringify(unitsResult)}`);
-  
-  if (unitsResult.success) {
-    let result = {
-      ...unitsResult
-    };
+  const __parseTermHelper = (accum) => {
+    const accumRest = accum.rest;
 
-    const resultConversion = result.result.conversion;
-
-    let rest = result.rest;
-    while (rest[0] === '*' || rest[0] === '/') {
-      const operator = rest[0];
-      rest = rest.substring(1);
-
-      const unitsResult = _parseUnits(rest);
+    if (accumRest[0] !== '*' && accumRest[0] !== '/' || !accum.success) {
+      return accum;
+    } else {
+      const operator = accumRest[0];
+      const unitsResult = _parseUnits(accumRest.substring(1));
       console.log(`_parseTerm: unitsResult = ${JSON.stringify(unitsResult)}`);
 
-      const consumed = result.consumed + operator + unitsResult.consumed;
+      const consumed = accum.consumed + operator + unitsResult.consumed;
 
-      if (unitsResult.success) {
-        rest = unitsResult.rest;
+      return __parseTermHelper(unitsResult.success
+          ? {
+            consumed: consumed,
+            rest: unitsResult.rest,
+            result: {
+              exponents: Object.keys(unitsResult.result.exponents).reduce((accum, elt) => {
+                accum[elt] = (accum[elt] || 0) + (operator === '*' ? 1 : -1) * unitsResult.result.exponents[elt];
 
-        const unitsConversion = unitsResult.result.conversion;
-
-        const exponentsAfterOperator = Object.keys(unitsResult.result.exponents).reduce((accum, elt) => {
-          accum[elt] = (accum[elt] || 0) + (operator === '*' ? 1 : -1) * unitsResult.result.exponents[elt];
-
-          return accum;
-        }, result.result.exponents);
-
-        result = {
-          consumed: consumed,
-          rest: rest,
-          result: {
-            exponents: exponentsAfterOperator,
-            conversion: (magnitude) => {
-              return resultConversion(unitsConversion(magnitude));
-            }
-          },
-          success: true
-        };
-      } else {
-        failureResult['consumed'] = consumed;
-        failureResult['rest'] = unitsResult.rest;
-
-        return failureResult;
-      }
+                return accum;
+              }, accum.result.exponents),
+              conversion: (magnitude) => {
+                return accum.result.conversion(unitsResult.result.conversion(magnitude));
+              }
+            },
+            success: true
+          }
+          : {
+            consumed: consumed,
+            rest: unitsResult.rest,
+            success: false
+          });
     }
+  };
 
-    return result;
-  } else {
-    failureResult['consumed'] = unitsResult.consumed;
-  }
-                                           
-  return failureResult;
+  const unitsResult = _parseUnits(string);
+  console.log(`_parseTerm: unitsResult = ${JSON.stringify(unitsResult)}`);
+
+  return unitsResult.success
+      ? __parseTermHelper(unitsResult)
+      : {
+        consumed: unitsResult.consumed,
+        rest: string,
+        success: false
+      };
 }
 
 /**

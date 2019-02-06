@@ -1,6 +1,6 @@
 import test from 'ava';
 
-var Number = require('../Number.ts');
+import Number from '../Number.ts';
 
 test('_isNaN should return false', t => {
   t.false(Number._isNaN(5));

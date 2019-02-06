@@ -2,7 +2,7 @@ import test from 'ava';
 
 // TODO: Test all other derived units.
 
-import SIParser from '../SIParser.ts'
+import SIParser from '../SIParser.ts';
 
 test('_parseChar should succeed', t => {
   const observed = SIParser._parseChar('aoeu', 'a');

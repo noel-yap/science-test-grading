@@ -1,6 +1,6 @@
 import test from 'ava';
 
-var Properties = require('../Properties.ts');
+import Properties from '../Properties.ts';
 
 test('_getGradingProperties should handle non-existent range', t => {
   const spreadsheet = {

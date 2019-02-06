@@ -16,11 +16,7 @@ let __ScientificNotation__ = __require('./ScientificNotation.ts', () => {
     _sciToNum: _sciToNum
   };
 });
-let __SIParser__ = __require('./SIParser.ts', () => {
-  return {
-    _normalizeUnits: _normalizeUnits
-  };
-});
+let SIParser = __require('./SIParser.ts', () => {});
 
 /**
  * @param points    Number of full-credit points.
@@ -255,7 +251,8 @@ function _grade(gradingProperties, points, observed, expected) {
 
 function _getParts(expression) {
   try {
-    const normalizeExpressionResult = __SIParser__._normalizeUnits(expression);
+    const siParser = new SIParser;
+    const normalizeExpressionResult = siParser._normalizeUnits(expression);
     console.log(`_getParts: expression = ${expression}, normalized = ${normalizeExpressionResult}`);
     
     if (normalizeExpressionResult.success) {

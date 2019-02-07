@@ -69,11 +69,6 @@ function normalizeUnits(string) {
 
 class SIParser {
   _normalizeUnits(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     if (typeof (string) !== 'string') {
       throw new Error(`'${JSON.stringify(string)}' must be of type string but is of type '${typeof (string)}'.`);
     }
@@ -124,10 +119,12 @@ class SIParser {
         success: true
       };
     } else {
-      failureResult['consumed'] = expressionResult.consumed;
+      return {
+        consumed: expressionResult.consumed,
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   /**
@@ -138,11 +135,6 @@ class SIParser {
    *                  | <term>
    **/
   _parseExpression(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     const magnitudeResult = this._parseMagnitude(string);
     console.log(`_parseExpression: magnitudeResult = ${JSON.stringify(magnitudeResult)}`);
 
@@ -188,7 +180,11 @@ class SIParser {
             success: true
           };
         } else {
-          failureResult['consumed'] = consumed;
+          return {
+            consumed: consumed,
+            rest: string,
+            success: false
+          };
         }
       } else {
         return {
@@ -204,10 +200,12 @@ class SIParser {
         };
       }
     } else {
-      failureResult['consumed'] = magnitudeResult.consumed;
+      return {
+        consumed: magnitudeResult.consumed,
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   /**
@@ -217,11 +215,6 @@ class SIParser {
    *                 | <significand> e <exponent>
    **/
   _parseMagnitude(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     const significandResult = this._parseSignificand(string);
     console.log(`_parseMagnitude: significandResult = ${JSON.stringify(significandResult)}`);
 
@@ -237,19 +230,21 @@ class SIParser {
 
         const consumed = significandResult.consumed + operator + exponentResult.consumed;
 
-        if (exponentResult.success) {
-          return {
-            consumed: consumed,
-            rest: string.substring(consumed.length),
-            result: {
-              significand: significandResult.result,
-              exponent: exponentResult.result
-            },
-            success: true
-          };
-        } else {
-          failureResult['consumed'] = consumed;
-        }
+        return exponentResult.success
+            ? {
+              consumed: consumed,
+              rest: string.substring(consumed.length),
+              result: {
+                significand: significandResult.result,
+                exponent: exponentResult.result
+              },
+              success: true
+            }
+            : {
+              consumed: consumed,
+              rest: string,
+              success: false
+            };
       } else {
         return {
           consumed: significandResult.consumed,
@@ -262,10 +257,12 @@ class SIParser {
         };
       }
     } else {
-      failureResult['consumed'] = significandResult.consumed;
+      return {
+        consumed: significandResult.consumed,
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   /**
@@ -280,11 +277,6 @@ class SIParser {
    *             | <factor>
    */
   _parseUnits(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     const openParenthesisResult = SIParser._parseChar(string, '(');
     console.log(`_parseUnits: openParenthesisResult = ${JSON.stringify(openParenthesisResult)}`);
 
@@ -298,31 +290,37 @@ class SIParser {
 
         const consumedInclusiveBetweenParentheses = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed + closeParenthesisResult.consumed;
 
-        if (closeParenthesisResult.success) {
-          return {
-            consumed: consumedInclusiveBetweenParentheses,
-            rest: closeParenthesisResult.rest,
-            result: termBetweenParenthesesResult.result,
-            success: true
-          };
-        } else {
-          failureResult['consumed'] = consumedInclusiveBetweenParentheses;
-        }
+        return closeParenthesisResult.success
+            ? {
+              consumed: consumedInclusiveBetweenParentheses,
+              rest: closeParenthesisResult.rest,
+              result: termBetweenParenthesesResult.result,
+              success: true
+            }
+            : {
+              consumed: consumedInclusiveBetweenParentheses,
+              rest: string,
+              success: false
+            };
       } else {
-        failureResult['consumed'] = openParenthesisResult.consumed + termBetweenParenthesesResult.consumed;
+        return {
+          consumed: openParenthesisResult.consumed + termBetweenParenthesesResult.consumed,
+          rest: string,
+          success: false
+        };
       }
     } else {
       const factorResult = this._parseFactor(string);
       console.log(`_parseUnits: factorResult = ${JSON.stringify(factorResult)}`);
 
-      if (factorResult.success) {
-        return factorResult;
-      } else {
-        failureResult['consumed'] = factorResult.consumed;
-      }
+      return factorResult.success
+          ? factorResult
+          : {
+            consumed: factorResult.consumed,
+            rest: string,
+            success: false
+          };
     }
-
-    return failureResult;
   }
 
   /**
@@ -443,11 +441,6 @@ class SIParser {
    * <derived-unit> ::= rad | sr | Hz | N | Pa | J | W | C | V | F | Ω | S | Wb | T | H | °C | lm | lx | Bq | Gy | Sv | kat | % | ppm | ppb | ppt | ppq
    **/
   _parseBase(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     const prefixes = {
       'Y': 24,
       'Z': 21,
@@ -729,10 +722,12 @@ class SIParser {
         success: true
       };
     } else {
-      failureResult['consumed'] = '';
+      return {
+        consumed: '',
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   /**
@@ -748,63 +743,41 @@ class SIParser {
    *               | <digits>
    **/
   _parseInteger(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
+    if (string[0] === '+' || string[0] === '-') {
+      const operator = string[0];
+      
+      const operatorResult = SIParser._parseChar(string, operator);
+      console.log(`_parseInteger: operatorResult = ${JSON.stringify(operatorResult)}`);
 
-    const plusResult = SIParser._parseChar(string, '+');
-    console.log(`_parseInteger: plusResult = ${JSON.stringify(plusResult)}`);
+      const integerAfterOperatorResult = this._parseInteger(operatorResult.rest);
+      console.log(`_parseInteger: integerAfterOperatorResult = ${JSON.stringify(integerAfterOperatorResult)}`);
 
-    if (plusResult.success) {
-      const integerAfterPlusResult = this._parseInteger(plusResult.rest);
-      console.log(`_parseInteger: integerAfterPlusResult = ${JSON.stringify(integerAfterPlusResult)}`);
+      const consumedInclusiveAfterOperator = operatorResult.consumed + integerAfterOperatorResult.consumed;
 
-      const consumedInclusiveAfterPlus = plusResult.consumed + integerAfterPlusResult.consumed;
-
-      if (integerAfterPlusResult.success) {
-        return {
-          consumed: consumedInclusiveAfterPlus,
-          rest: integerAfterPlusResult.rest,
-          result: integerAfterPlusResult.result,
-          success: true
-        };
-      } else {
-        failureResult['consumed'] = consumedInclusiveAfterPlus;
-      }
-    } else {
-      const minusResult = SIParser._parseChar(string, '-');
-      console.log(`_parseInteger: minusResult = ${JSON.stringify(minusResult)}`);
-
-      if (minusResult.success) {
-        const integerAfterMinusResult = this._parseInteger(minusResult.rest);
-        console.log(`_parseInteger: integerAfterMinusResult = ${JSON.stringify(integerAfterMinusResult)}`);
-
-        const consumedInclusiveAfterMinus = minusResult.consumed + integerAfterMinusResult.consumed;
-
-        if (integerAfterMinusResult.success) {
-          return {
-            consumed: consumedInclusiveAfterMinus,
-            rest: integerAfterMinusResult.rest,
-            result: -integerAfterMinusResult.result,
+      return integerAfterOperatorResult.success
+          ? {
+            consumed: consumedInclusiveAfterOperator,
+            rest: integerAfterOperatorResult.rest,
+            result: (operator === '+' ? 1 : -1) * integerAfterOperatorResult.result,
             success: true
+          }
+          : {
+            consumed: consumedInclusiveAfterOperator,
+            rest: string,
+            success: false
           };
-        } else {
-          failureResult['consumed'] = consumedInclusiveAfterMinus;
-        }
-      } else {
-        const digitsResult = SIParser._parseDigits(string);
-        console.log(`_parseInteger: digitsResult = ${JSON.stringify(digitsResult)}`);
+    } else {
+      const digitsResult = SIParser._parseDigits(string);
+      console.log(`_parseInteger: digitsResult = ${JSON.stringify(digitsResult)}`);
 
-        if (digitsResult.success) {
-          return digitsResult;
-        } else {
-          failureResult['consumed'] = digitsResult.consumed;
-        }
-      }
+      return digitsResult.success
+          ? digitsResult
+          : {
+            consumed: digitsResult.consumed,
+            rest: string,
+            success: false
+          };
     }
-
-    return failureResult;
   }
 
   /**
@@ -815,84 +788,55 @@ class SIParser {
    *               | <dot-digits>
    **/
   _parseDecimal(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
+    if (string[0] === '+' || string[0] === '-') {
+      const operator = string[0];
 
-    const plusResult = SIParser._parseChar(string, '+');
-    console.log(`_parseDecimal: plusResult = ${JSON.stringify(plusResult)}`);
+      const operatorResult = SIParser._parseChar(string, operator);
+      console.log(`_parseDecimal: operatorResult = ${JSON.stringify(operatorResult)}`);
 
-    if (plusResult.success) {
-      const decimalAfterPlusResult = this._parseDecimal(plusResult.rest);
-      console.log(`_parseDecimal: decimalAfterPlusResult = ${JSON.stringify(decimalAfterPlusResult)}`);
+      const decimalAfterOperatorResult = this._parseDecimal(operatorResult.rest);
+      console.log(`_parseDecimal: decimalAfterOperatorResult = ${JSON.stringify(decimalAfterOperatorResult)}`);
 
-      const consumedInclusiveAfterPlus = plusResult.consumed + decimalAfterPlusResult.consumed;
+      const consumedInclusiveAfterOperator = operatorResult.consumed + decimalAfterOperatorResult.consumed;
 
-      if (decimalAfterPlusResult.success) {
+      return decimalAfterOperatorResult.success
+          ? {
+            consumed: consumedInclusiveAfterOperator,
+            rest: decimalAfterOperatorResult.rest,
+            result: (operator === '+' ? 1 : -1) * decimalAfterOperatorResult.result,
+            success: true
+          }
+          : {
+            consumed: consumedInclusiveAfterOperator,
+            rest: string,
+            success: false
+          };
+    } else {
+      const digitsResult = SIParser._parseDigits(string);
+      console.log(`_parseDecimal: digitsResult = ${JSON.stringify(digitsResult)}`);
+
+      const dotDigitsResult = SIParser._parseDotDigits(digitsResult.rest);
+      console.log(`_parseDecimal: dotDigitsResult = ${JSON.stringify(dotDigitsResult)}`);
+
+      if (dotDigitsResult.success) {
+        const consumedAroundPeriod = digitsResult.consumed + dotDigitsResult.consumed;
+
         return {
-          consumed: consumedInclusiveAfterPlus,
-          rest: decimalAfterPlusResult.rest,
-          result: decimalAfterPlusResult.result,
+          consumed: consumedAroundPeriod,
+          rest: dotDigitsResult.rest,
+          result: parseFloat(consumedAroundPeriod),
           success: true
         };
       } else {
-        failureResult['consumed'] = consumedInclusiveAfterPlus;
-      }
-    } else {
-      const minusResult = SIParser._parseChar(string, '-');
-      console.log(`_parseDecimal: minusResult = ${JSON.stringify(minusResult)}`);
-
-      if (minusResult.success) {
-        const decimalAfterMinusResult = this._parseDecimal(minusResult.rest);
-        console.log(`_parseDecimal: decimalAfterMinusResult = ${JSON.stringify(decimalAfterMinusResult)}`);
-
-        const consumedInclusiveAfterMinus = minusResult.consumed + decimalAfterMinusResult.consumed;
-
-        if (decimalAfterMinusResult.success) {
-          return {
-            consumed: consumedInclusiveAfterMinus,
-            rest: decimalAfterMinusResult.rest,
-            result: -decimalAfterMinusResult.result,
-            success: true
-          };
-        } else {
-          failureResult['consumed'] = consumedInclusiveAfterMinus;
-        }
-      } else {
-        const digitsResult = SIParser._parseDigits(string);
-        console.log(`_parseDecimal: digitsResult = ${JSON.stringify(digitsResult)}`);
-
-        const dotDigitsResult = SIParser._parseDotDigits(digitsResult.rest);
-        console.log(`_parseDecimal: dotDigitsResult = ${JSON.stringify(dotDigitsResult)}`);
-
-        if (dotDigitsResult.success) {
-          const consumedAroundPeriod = digitsResult.consumed + dotDigitsResult.consumed;
-
-          return {
-            consumed: consumedAroundPeriod,
-            rest: dotDigitsResult.rest,
-            result: parseFloat(consumedAroundPeriod),
-            success: true
-          };
-        } else {
-          return digitsResult;
-        }
+        return digitsResult;
       }
     }
-
-    return failureResult;
   }
 
   /**
    * <dot-digits> ::= . <digits>
    **/
   static _parseDotDigits(string) {
-    const failureResult = {
-      rest: string,
-      success: false
-    };
-
     const periodResult = SIParser._parseChar(string, '.');
     console.log(`_parseDotDigits: periodResult = ${JSON.stringify(periodResult)}`);
 
@@ -909,22 +853,18 @@ class SIParser {
         success: true
       };
     } else {
-      failureResult['consumed'] = periodResult.consumed;
+      return {
+        consumed: periodResult.consumed,
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   /**
    * <digits> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
    **/
   static _parseDigits(string) {
-    const failureResult = {
-      consumed: '',
-      rest: string,
-      success: false
-    };
-
     const nDigits = string.match(/^[0-9]*/g)[0].length;
     if (nDigits !== 0) {
       const consumed = string.substring(0, nDigits);
@@ -935,9 +875,13 @@ class SIParser {
         result: parseInt(consumed),
         success: true
       };
+    } else {
+      return {
+        consumed: '',
+        rest: string,
+        success: false
+      };
     }
-
-    return failureResult;
   }
 
   static _parseChar(string, char) {

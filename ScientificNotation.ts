@@ -1,15 +1,3 @@
-/**
- * Converts a string similar to '234.567*10^89' to a number.
- **/
-function sciToNum(formula) {
-  console.log(`sciToNum: ${formula}, ${Array.prototype.slice.call(arguments)}`);
-  return _throttle(ScientificNotation._sciToNum, [formula]);
-}
-
-function numToSci(number, numberOfSignificantFigures) {
-  return _throttle(ScientificNotation._numToSci, Array.prototype.slice.call(arguments, 0));
-}
-
 class ScientificNotation {
   static _sciToNum(formula) {
     console.log(`_sciToNum: formula = ${formula}`);

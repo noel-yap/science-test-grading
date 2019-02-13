@@ -10,11 +10,14 @@
     "@types/google-apps-script": "0.0.36",
     "growl": ">=1.10.0",
     "log-suppress": "^1.0.3",
-    "nim": "^1.4.0",
-    "npm": "^6.7.0"
+    "nim": "^1.4.0"
   },
   "devDependencies": {
-    "ava": "^1.2.0"
+    "@types/node": "^10.12.24",
+    "ava": "^1.2.1",
+    "npm": "^6.7.0",
+    "ts-node": "^8.0.2",
+    "typescript": "^3.3.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -28,5 +31,14 @@
   "bugs": {
     "url": "https://github.com/november-yankee/science-test-grading/issues"
   },
-  "homepage": "https://github.com/november-yankee/science-test-grading#readme"
+  "homepage": "https://github.com/november-yankee/science-test-grading#readme",
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  }
 }

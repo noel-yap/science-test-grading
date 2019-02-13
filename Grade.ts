@@ -1,7 +1,7 @@
-let Number = __require('./Number.ts');
+let Numbers = __require('./Numbers.ts');
 let ScientificNotation = __require('./ScientificNotation.ts');
 let Properties = __require('./Properties.ts');
-let SIParser = __require('./SIParser.ts');
+import {SIParser} from './SIParser';
 
 /**
  * @param points    Number of full-credit points.
@@ -128,9 +128,9 @@ class Grade {
         ? minExpectedNormalizedMagnitude
         : maxExpectedNormalizedMagnitude;
 
-    const minExpectedNormalizedOrderOfMagnitude = Number._orderOfMagnitude(minExpectedNormalizedMagnitude);
-    const maxExpectedNormalizedOrderOfMagnitude = Number._orderOfMagnitude(maxExpectedNormalizedMagnitude);
-    const observedNormalizedOrderOfMagnitude = Number._orderOfMagnitude(observedNormalizedMagnitude);
+    const minExpectedNormalizedOrderOfMagnitude = Numbers._orderOfMagnitude(minExpectedNormalizedMagnitude);
+    const maxExpectedNormalizedOrderOfMagnitude = Numbers._orderOfMagnitude(maxExpectedNormalizedMagnitude);
+    const observedNormalizedOrderOfMagnitude = Numbers._orderOfMagnitude(observedNormalizedMagnitude);
 
     const minExpectedNormalizedMagnitudeAdjusted = Grade._adjustOrderOfMagnitude(minExpectedNormalizedMagnitude, minExpectedNormalizedOrderOfMagnitude);
     const maxExpectedNormalizedMagnitudeAdjusted = Grade._adjustOrderOfMagnitude(maxExpectedNormalizedMagnitude, maxExpectedNormalizedOrderOfMagnitude);
@@ -186,7 +186,7 @@ class Grade {
     console.log(`_grade: closeToAdjustedExpected = ${closeToAdjustedExpected}`);
 
     const magnitudePortion = gradingProperties['magnitude-portion'];
-    const magnitudeCredit = Number._isNaN(observedNormalizedMagnitude)
+    const magnitudeCredit = Numbers._isNaN(observedNormalizedMagnitude)
         ? [[gradingProperties['missing-magnitude'], 'No magnitude.']]
         : ((correctOrderOfMagnitude
             ? [[0.0, undefined]]
@@ -210,7 +210,7 @@ class Grade {
     console.log(`_grade: magnitudeCredit = ${magnitudeCredit}`);
     console.log(`_grade: unitsCredit = ${unitsCredit}`);
 
-    const noExpectedMagnitude = Number._isNaN(minExpectedNormalizedMagnitudeAdjusted) && Number._isNaN(maxExpectedNormalizedMagnitudeAdjusted);
+    const noExpectedMagnitude = Numbers._isNaN(minExpectedNormalizedMagnitudeAdjusted) && Numbers._isNaN(maxExpectedNormalizedMagnitudeAdjusted);
     const noExpectedUnits = expectedNormalizedUnits === '';
     const result = []
         .concat(noExpectedMagnitude ? [] : magnitudeCredit)
@@ -237,17 +237,17 @@ class Grade {
 
   static _getParts(expression) {
     try {
-      const normalizeExpressionResult = new SIParser()._normalizeUnits(expression);
+      const normalizeExpressionResult = new SIParser.SIParser()._normalizeUnits(expression);
       console.log(`_getParts: expression = ${expression}, normalized = ${normalizeExpressionResult}`);
 
       if (normalizeExpressionResult.success) {
         const magnitudeProvided = '0' <= expression.charAt(0) && expression.charAt(0) <= '9' || expression.charAt(0) === '.';
         const normalizedMagnitude = magnitudeProvided
-            ? ScientificNotation._sciToNum(normalizeExpressionResult.result.magnitude)
+            ? ScientificNotation._sciToNum((<SIParser.SuccessResult>normalizeExpressionResult).result.magnitude)
             : NaN;
-        const normalizedUnits = normalizeExpressionResult.result.units;
+        const normalizedUnits = (<SIParser.SuccessResult>normalizeExpressionResult).result.units;
         const significantFigures = magnitudeProvided
-            ? Number._numberOfSignificantFigures(expression)
+            ? Numbers._numberOfSignificantFigures(expression)
             : NaN;
 
         console.log(`_getParts: normalizedMagnitude = ${normalizedMagnitude}`);
@@ -272,18 +272,18 @@ class Grade {
   }
 
   static _adjustOrderOfMagnitude(number, adjustBy) {
-    const numberOfSignificantFigures = Number._numberOfSignificantFigures(number.toString());
-    const orderOfMagnitude = Number._orderOfMagnitude(number);
+    const numberOfSignificantFigures = Numbers._numberOfSignificantFigures(number.toString());
+    const orderOfMagnitude = Numbers._orderOfMagnitude(number);
     console.log(`_adjustOrderOfMagnitude: adjustBy = ${adjustBy}, numberOfSignificantFigures = ${numberOfSignificantFigures}, orderOfMagnitude = ${orderOfMagnitude}`);
 
-    return Number._round(number * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
+    return Numbers._round(number * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
   }
 
   static _roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
     console.log(`_roundToSignificantFigure: fewerSignificantFigures = ${fewerSignificantFigures}, moreSignificantFigures = ${moreSignificantFigures}`);
 
     return fewerSignificantFigures === moreSignificantFigures ||
-        Number._round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures)) / Math.log(10)) + 1) === fewerSignificantFigures;
+        Numbers._round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures)) / Math.log(10)) + 1) === fewerSignificantFigures;
   }
 }
 

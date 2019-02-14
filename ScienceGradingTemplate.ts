@@ -1,3 +1,5 @@
+import {SIParser} from "./SIParser";
+
 /**
  * Normalizes SI units into fundamental SI units (eg g, m, s) so it's easier to compare different representations (eg '50 kPa',
  * '50*10^3 kg/(m*s^2)', '5.0*10^4 kg*m^-1*s^-2').
@@ -6,14 +8,17 @@ function normalizeUnits(string) {
   const normalizeUnitsResult = _throttle(
       (string) => SIParser._normalizeUnits(string),
       Array.prototype.slice.call(arguments));
-  console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
+  try {
+    return normalizeUnitsResult
+        .andThen((normalizeUnitsResult: SIParser.Result) => {
+          console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
 
-  if (normalizeUnitsResult.success) {
-    const magnitudeString = normalizeUnitsResult.result.magnitude;
-    const unitsString = normalizeUnitsResult.result.units;
+          const magnitudeString = normalizeUnitsResult.result.magnitude;
+          const unitsString = normalizeUnitsResult.result.units;
 
-    return `${magnitudeString} ${unitsString}`.trim();
-  } else {
+          return `${magnitudeString} ${unitsString}`.trim();
+        });
+  } catch (e: Error) {
     throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${string}'. Are you sure metric units are being used?`);
   }
 }

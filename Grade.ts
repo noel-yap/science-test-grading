@@ -92,31 +92,32 @@ class Grade {
 
           const minExpectedParts = Grade._getParts(minExpected);
           const maxExpectedParts = Grade._getParts(maxExpected);
+          console.log(`_grade: minExpectedParts = ${minExpectedParts.toString(2)}, maxExpectedParts = ${maxExpectedParts.toString(2)}`);
 
           return [
-            minExpectedParts.normalizedMagnitude,
-            minExpectedParts.normalizedUnits,
-            minExpectedParts.significantFigures,
-            maxExpectedParts.normalizedMagnitude,
-            maxExpectedParts.normalizedUnits,
-            maxExpectedParts.significantFigures];
+            minExpectedParts.result.normalizedMagnitude,
+            minExpectedParts.result.normalizedUnits,
+            minExpectedParts.result.significantFigures,
+            maxExpectedParts.result.normalizedMagnitude,
+            maxExpectedParts.result.normalizedUnits,
+            maxExpectedParts.result.significantFigures];
         }
         : () => {
           const expectedParts = Grade._getParts(expected);
 
           return [
-            expectedParts.normalizedMagnitude,
-            expectedParts.normalizedUnits,
-            expectedParts.significantFigures,
-            expectedParts.normalizedMagnitude,
-            expectedParts.normalizedUnits,
-            expectedParts.significantFigures];
+            expectedParts.result.normalizedMagnitude,
+            expectedParts.result.normalizedUnits,
+            expectedParts.result.significantFigures,
+            expectedParts.result.normalizedMagnitude,
+            expectedParts.result.normalizedUnits,
+            expectedParts.result.significantFigures];
         })();
 
     const observedParts = Grade._getParts(observed);
-    const observedNormalizedMagnitude = observedParts.normalizedMagnitude;
-    const observedNormalizedUnits = observedParts.normalizedUnits;
-    const observedSignificantFigures = observedParts.significantFigures;
+    const observedNormalizedMagnitude = observedParts.result.normalizedMagnitude;
+    const observedNormalizedUnits = observedParts.result.normalizedUnits;
+    const observedSignificantFigures = observedParts.result.significantFigures;
 
     if (minExpectedNormalizedUnits !== maxExpectedNormalizedUnits) {
       throw new Error(`Normalized expected units must be the same but were '${minExpectedNormalizedUnits}' and '${maxExpectedNormalizedUnits}'.`);
@@ -237,31 +238,32 @@ class Grade {
 
   static _getParts(expression) {
     try {
-      const normalizeExpressionResult = SIParser._normalizeUnits(expression);
-      console.log(`_getParts: expression = ${expression}, normalized = ${normalizeExpressionResult}`);
+      return SIParser._normalizeUnits(expression)
+          .andThen((normalizeExpressionResult: SIParser.Result) => {
+            const magnitudeProvided = '0' <= expression.charAt(0) && expression.charAt(0) <= '9' || expression.charAt(0) === '.';
+            const normalizedMagnitude = magnitudeProvided
+                ? ScientificNotation._sciToNum((<SIParser.SuccessResult>normalizeExpressionResult).result.magnitude)
+                : NaN;
+            const normalizedUnits = (<SIParser.SuccessResult>normalizeExpressionResult).result.units;
+            const significantFigures = magnitudeProvided
+                ? Numbers._numberOfSignificantFigures(expression)
+                : NaN;
 
-      if (normalizeExpressionResult.success) {
-        const magnitudeProvided = '0' <= expression.charAt(0) && expression.charAt(0) <= '9' || expression.charAt(0) === '.';
-        const normalizedMagnitude = magnitudeProvided
-            ? ScientificNotation._sciToNum((<SIParser.SuccessResult>normalizeExpressionResult).result.magnitude)
-            : NaN;
-        const normalizedUnits = (<SIParser.SuccessResult>normalizeExpressionResult).result.units;
-        const significantFigures = magnitudeProvided
-            ? Numbers._numberOfSignificantFigures(expression)
-            : NaN;
+            console.log(`_getParts: normalizedMagnitude = ${normalizedMagnitude}`);
+            console.log(`_getParts: normalizedUnits = ${normalizedUnits}`);
+            console.log(`_getParts: significantFigures = ${significantFigures}`);
 
-        console.log(`_getParts: normalizedMagnitude = ${normalizedMagnitude}`);
-        console.log(`_getParts: normalizedUnits = ${normalizedUnits}`);
-        console.log(`_getParts: significantFigures = ${significantFigures}`);
-
-        return {
-          significantFigures: significantFigures,
-          normalizedMagnitude: normalizedMagnitude,
-          normalizedUnits: normalizedUnits
-        };
-      } else {
-        throw new Error(`Unable to parse after '${normalizeExpressionResult.consumed}' in '${expression}'. Non-metric units might be being used.`);
-      }
+            return Object.assign(normalizeExpressionResult, {
+              result: {
+                significantFigures: significantFigures,
+                normalizedMagnitude: normalizedMagnitude,
+                normalizedUnits: normalizedUnits
+              }
+            });
+          })
+          .orElse((normalizeExpressionResult: SIParser.Result) => {
+            throw new Error(`Unable to parse after '${normalizeExpressionResult.consumed}' in '${expression}'. Non-metric units might be being used.`);
+          });
     } catch (e) {
       if (e.message.indexOf('must be of type string') !== -1) {
         throw new Error(`${expression}' must be entered in as text (ie by starting it with \`'\`)`);

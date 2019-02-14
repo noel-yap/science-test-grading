@@ -791,70 +791,85 @@ test('_parseFactor should not have -0 exponents', t => {
   }, observed.previousResult));
 });
 
-test('_parseTerm should parse factor times factor', t => {
+test('_parseTerm should parse factor multiplied by factor', t => {
   const observed = SIParser._parseTerm('g*m');
 
-  t.deepEqual(observed, new SIParser.SuccessResult('g*m', '', {
-    conversion: observed.result.conversion,
-    exponents: {
-      10: 0,
-      g: 1,
-      m: 1
-    }
-  }));
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      'g*m',
+      '',
+      {
+        conversion: observed.result.conversion,
+        exponents: {
+          10: 0,
+          g: 1,
+          m: 1
+        }
+      },
+      observed.previousResult));
 });
 
 test('_parseTerm should parse factor divided by factor', t => {
   const observed = SIParser._parseTerm('m/s');
 
-  t.deepEqual(observed, new SIParser.SuccessResult('m/s', '', {
-    conversion: observed.result.conversion,
-    exponents: {
-      10: 0,
-      m: 1,
-      s: -1
-    }
-  }));
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      'm/s',
+      '',
+      {
+        conversion: observed.result.conversion,
+        exponents: {
+          10: 0,
+          m: 1,
+          s: -1
+        }
+      },
+      observed.previousResult));
 });
 
 test('_parseTerm should parse consecutive multiplication operators', t => {
   const observed = SIParser._parseTerm('g*m*s');
 
-  t.deepEqual(observed, new SIParser.SuccessResult('g*m*s', '', {
-    conversion: observed.result.conversion,
-    exponents: {
-      10: 0,
-      g: 1,
-      m: 1,
-      s: 1
-    }
-  }));
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      'g*m*s',
+      '',
+      {
+        conversion: observed.result.conversion,
+        exponents: {
+          10: 0,
+          g: 1,
+          m: 1,
+          s: 1
+        }
+      },
+      observed.previousResult));
 });
 
 test('_parseTerm should parse consecutive division operators', t => {
   const observed = SIParser._parseTerm('g/m/s');
 
-  t.deepEqual(observed, new SIParser.SuccessResult('g/m/s', '', {
-    conversion: observed.result.conversion,
-    exponents: {
-      10: 0,
-      g: 1,
-      m: -1,
-      s: -1
-    }
-  }));
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      'g/m/s',
+      '', {
+        conversion: observed.result.conversion,
+        exponents: {
+          10: 0,
+          g: 1,
+          m: -1,
+          s: -1
+        }
+      },
+      observed.previousResult));
 });
 
 test('_parseTerm should fail with failed multiplier', t => {
   const observed = SIParser._parseTerm('%*1ppm');
 
-  t.deepEqual(observed, new SIParser.FailureResult('%*', '1ppm'));
+  t.deepEqual(observed, new SIParser.FailureResult('%*', '%*1ppm', observed.result, observed.previousResult));
 });
 
 test('_parseTerm should fail with failed divisor', t => {
   const observed = SIParser._parseTerm('%/1ppm');
 
-  t.deepEqual(observed, new SIParser.FailureResult('%/', '1ppm'));
+  t.deepEqual(observed, new SIParser.FailureResult('%/', '%/1ppm', observed.result, observed.previousResult));
 });
 
 test('_parseUnits should fail with nothing after open parenthesis', t => {
@@ -1010,7 +1025,7 @@ test('_parseExpression should parse magnitude with term', t => {
       .withName(observed.name));
 });
 
-test('_parseExpression should parse magnitude times term', t => {
+test('_parseExpression should parse magnitude multiplied by term', t => {
   const observed = SIParser._parseExpression('6.02214086*10^23*mol^-1');
 
   t.deepEqual(observed, new SIParser.SuccessResult(
@@ -1112,5 +1127,5 @@ test('_normalizeUnits should normalize units', t => {
 test('_normalizeUnits should fail', t => {
   const observed = SIParser._normalizeUnits('aoeu');
 
-  t.deepEqual(observed, new SIParser.FailureResult('', 'aoeu'));
+  t.deepEqual(observed, new SIParser.FailureResult('', 'aoeu', observed.result, observed.previousResult).withName(observed.name));
 });

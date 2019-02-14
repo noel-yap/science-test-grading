@@ -60,45 +60,44 @@ export module SIParser {
 
     input = input.split(' ').join('');
 
-    if (input === '') {
-      return new SuccessResult('', '', {
-        magnitude: '',
-        units: ''
-      });
-    }
+    return input === ''
+      ? new SuccessResult('', '', {
+          magnitude: '',
+          units: ''
+        })
+      : _parseExpression(input)
+            .andThen((result: Result) => {
+              const exponents = result.result.exponents;
 
-    const expressionResult = _parseExpression(input);
-    console.log(`_normalizeUnits: expressionResult = ${expressionResult.toString()}`);
+              const units = ['10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol'].filter((unit) => {
+                return exponents.hasOwnProperty(unit);
+              });
 
-    if (expressionResult.success) {
-      const exponents = expressionResult.result.exponents;
+              const magnitudeString = result.result.magnitude.toString() + (exponents['10'] !== 0
+                  ? '*10^' + exponents['10']
+                  : '');
+              const unitsString = units
+                  .filter((unit) => {
+                    return unit !== '10';
+                  })
+                  .map((unit) => {
+                    return unit + (exponents[unit] !== 1
+                        ? '^' + exponents[unit]
+                        : '');
+                  })
+                  .join('*');
+              console.log(`_normalizeUnits: magnitudeString = ${magnitudeString}`);
 
-      const units = ['10', 'g', 'm', 's', 'A', 'K', 'cd', 'mol'].filter((unit) => {
-        return exponents.hasOwnProperty(unit);
-      });
-
-      const magnitudeString = expressionResult.result.magnitude.toString() + (exponents['10'] !== 0
-          ? '*10^' + exponents['10']
-          : '');
-      const unitsString = units
-          .filter((unit) => {
-            return unit !== '10';
-          })
-          .map((unit) => {
-            return unit + (exponents[unit] !== 1
-                ? '^' + exponents[unit]
-                : '');
-          })
-          .join('*');
-      console.log(`_normalizeUnits: magnitudeString = ${magnitudeString}`);
-
-      return new SuccessResult(expressionResult.consumed, expressionResult.rest, {
-        magnitude: magnitudeString,
-        units: unitsString
-      });
-    } else {
-      return new FailureResult(expressionResult.consumed, input);
-    }
+              return new SuccessResult(result.consumed, result.rest, {
+                magnitude: magnitudeString,
+                units: unitsString
+              });
+            })
+            .orElse((result: Result) => {
+              return Object.assign(result, {
+                rest: input
+              });
+            });
   }
 
   /**
@@ -109,66 +108,67 @@ export module SIParser {
    *                | <magnitude> / <term>
    **/
   export function _parseExpression(input: string): Result {
-    return Result.do(() => _parseTerm(input), (result: Result) => {
-      return {
-        exponents: result.success ? result.result.exponents : {},
-        magnitude: NaN
-      };
-    })
-    .orElseDo((input: string) => {
-      return _parseMagnitude(input).withName('magnitude')
-          .andThenDo((input: string) => _parseLiteral(input, '/'), (result: Result) => {
-            return (termResult: Result) => {
-              const termExponents = termResult.result.exponents;
-              return Object.keys(termExponents).reduce((accum, elt) => {
-                accum[elt] = elt !== '10' ? -accum[elt] : accum[elt];
+    return _parseTerm(input)
+        .andThen((result: Result) => {
+          return Object.assign(result, {
+            result: {
+              exponents: result.result.exponents,
+              magnitude: NaN
+            }
+          });
+        })
+        .orElseDo((input: string) => {
+          return _parseMagnitude(input).withName('magnitude')
+              .andThenDo((input: string) => _parseLiteral(input, '/'), (result: Result) => {
+                return (termResult: Result) => {
+                  const termExponents = termResult.result.exponents;
+                  return Object.keys(termExponents).reduce((accum, elt) => {
+                    accum[elt] = elt !== '10' ? -accum[elt] : accum[elt];
 
-                return accum;
-              }, termExponents);
-            };
-          }).withName('divided-by')
-          .orElseDo((input: string) => _parseLiteral(input, '*'), (result: Result) => {
-            return (termResult: Result) => {
-              return termResult.result.exponents;
-            };
-          }).withName('multiplied-by')
-          .orElseDo((input: string) => _parseLiteral(input, ''), (result: Result) => {
-            return (termResult: Result) => {
-              return termResult.result.exponents;
-            };
-          }).withName('implied-multiplied-by')
-          .andThenPossiblyDo(_parseTerm, (result: Result) => {
-            return Object.assign(result.result, {
-              exponents: result.previousResult.result(result)
-            });
-          }).withName('term')
-          .map((result: Result) => {
-            const magnitudeResult = result.getByName('magnitude');
-            const termResult = result;
-            console.log(`_parseExpression: termResult = ${termResult.toString()}, magnitudeResult = ${magnitudeResult.toString()}`);
+                    return accum;
+                  }, termExponents);
+                };
+              }).withName('divided-by')
+              .orElseDo((input: string) => _parseLiteral(input, '*'), (result: Result) => {
+                return (termResult: Result) => {
+                  return termResult.result.exponents;
+                };
+              }).withName('multiplied-by')
+              .orElseDo((input: string) => _parseLiteral(input, ''), (result: Result) => {
+                return (termResult: Result) => {
+                  return termResult.result.exponents;
+                };
+              }).withName('implied-multiplied-by')
+              .andThenPossiblyDo(_parseTerm, (result: Result) => {
+                return Object.assign(result.result, {
+                  exponents: result.previousResult.result(result)
+                });
+              }).withName('term')
+              .map((result: Result) => {
+                const magnitudeResult = result.getByName('magnitude');
+                const termResult = result;
+                console.log(`_parseExpression: termResult = ${termResult.toString()}, magnitudeResult = ${magnitudeResult.toString()}`);
 
-            const exponents = termResult.result.exponents;
+                const exponents = termResult.result.exponents;
 
-            return termResult.consumed !== '' && termResult.rest === ''
-                ? Object.assign(termResult, {
-                  result: {
-                    exponents: !!exponents
-                        ? Object.assign(exponents, {
-                          10: (exponents ? exponents['10'] : 0) + magnitudeResult.result.exponent
-                        })
-                        : {
-                          10: !!magnitudeResult ? magnitudeResult.result.exponent : 0
-                        },
-                    magnitude: !!magnitudeResult && magnitudeResult.success
-                        ? !!termResult.result.conversion
+                return termResult.consumed !== '' && termResult.rest === ''
+                    ? Object.assign(termResult, {
+                      result: {
+                        exponents: !!exponents
+                            ? Object.assign(exponents, {
+                              10: (exponents ? exponents['10'] : 0) + magnitudeResult.result.exponent
+                            })
+                            : {
+                              10: !!magnitudeResult ? magnitudeResult.result.exponent : 0
+                            },
+                        magnitude: !!termResult.result.conversion
                             ? termResult.result.conversion(magnitudeResult.result.significand)
                             : magnitudeResult.result.significand
-                        : NaN
-                  }
-                })
-                : new FailureResult(termResult.consumed, termResult.consumed + termResult.rest).withName('_parseExpression');
-          });
-    });
+                      }
+                    })
+                    : new FailureResult(termResult.consumed, termResult.consumed + termResult.rest).withName('_parseExpression');
+              });
+        });
   }
 
   /**
@@ -232,9 +232,9 @@ export module SIParser {
     return _parseLiteral(input, '(')
         .andThenDo(_parseTerm)
         .andThenDo((input: string) => _parseLiteral(input, ')'), (result: Result) => result.previousResult.result)
-        .map((result: Result) => {
+        .orElse((result: Result) => {
           return Object.assign(result, {
-            rest: result.success ? result.rest : input
+            rest: input
           })
         });
   }
@@ -248,31 +248,34 @@ export module SIParser {
    * <slash-units> ::= / <units>
    **/
   export function _parseTerm(input: string): Result {
-    const __parseTermHelper = (result: Result) => {
-      const accumRest = result.rest;
+    const __parseTermHelper = (outer: Result) => {
+      return outer
+          .andThenPossiblyDo((input: string) => {
+            return _parseLiteral(input, '*')
+                .andThen((result: Result) => {
+                  return Object.assign(result, {
+                    result: (n) => n
+                  });
+                })
+                .orElseDo((input: string) => _parseLiteral(input, '/'), (result: Result) => {
+                  return (n) => n !== 0 ? -n : n;
+                })
+                .andThenDo(_parseUnits, (unitsResult: Result) => {
+                  return {
+                    exponents: Object.keys(unitsResult.result.exponents).reduce((accum, elt) => {
+                      accum[elt] = (accum[elt] || 0) + unitsResult.previousResult.result(unitsResult.result.exponents[elt]);
 
-      if (accumRest[0] !== '*' && accumRest[0] !== '/' || !result.success) {
-        return result;
-      } else {
-        const operator = accumRest[0];
-        const unitsResult = _parseUnits(accumRest.substring(1));
-        console.log(`_parseTerm: unitsResult = ${unitsResult.toString()}`);
-
-        const consumed = result.consumed + operator + unitsResult.consumed;
-
-        return __parseTermHelper(unitsResult.success
-            ? new SuccessResult(consumed, unitsResult.rest, {
-              exponents: Object.keys(unitsResult.result.exponents).reduce((accum, elt) => {
-                accum[elt] = (accum[elt] || 0) + (operator === '*' ? 1 : -1) * unitsResult.result.exponents[elt];
-
-                return accum;
-              }, result.result.exponents),
-              conversion: (magnitude) => {
-                return result.result.conversion(unitsResult.result.conversion(magnitude));
-              }
-            })
-            : new FailureResult(consumed, unitsResult.rest));
-      }
+                      return accum;
+                    }, outer.result.exponents),
+                    conversion: (magnitude) => {
+                      return outer.result.conversion(unitsResult.result.conversion(magnitude));
+                    }
+                  }
+                });
+          })
+          .andThen((result: Result) => {
+            return result === outer ? result : __parseTermHelper(result);
+          });
     };
 
     return __parseTermHelper(_parseUnits(input));
@@ -688,17 +691,15 @@ export module SIParser {
         : new FailureResult('', input));
   }
 
-  class Result {
+  export class Result {
     protected name: string;
 
     constructor(
-        public success: boolean,
         public consumed: string,
         public rest: string,
         public result?: any,
-        public previousResult?: Result) {
+        public previousResult?: SIParser.Result) {
       this.name = undefined;
-      this.success = success;
       this.consumed = consumed;
       this.rest = rest;
       this.result = result;
@@ -727,15 +728,8 @@ export module SIParser {
       return this;
     }
 
-    static do(
-        parseFn: () => Result,
-        onPass: (Result) => any = (result) => result.result): Result {
-      const parsed = parseFn();
-      console.log(`do: parsed = ${parsed.toString()}`);
-
-      return parsed.success
-          ? new SuccessResult(parsed.consumed, parsed.rest, onPass(parsed))
-          : parsed;
+    andThen(onPass: (result: Result) => Result) {
+      return this;
     }
 
     andThenDo(
@@ -750,6 +744,10 @@ export module SIParser {
       return this;
     }
 
+    orElse(onFail: (result: Result) => Result) {
+      return this;
+    }
+
     orElseDo(
         parseFn: (string) => Result,
         onPass: (Result) => any = (result) => result.result): Result {
@@ -761,18 +759,22 @@ export module SIParser {
         onPass: (Result) => any = (result) => result.result): Result {
       const parsed = parseFn(this.rest);
       parsed.previousResult = this;
-      console.log(`andThenPossiblyDo: this = ${this.toString()}, parsed = ${parsed.toString()}`);
+      console.log(`alsoPossiblyDo: this = ${this.toString()}, parsed = ${parsed.toString()}`);
 
       const consumed = this.consumed + parsed.consumed;
 
-      return parsed.success
-          ? new SuccessResult(consumed, parsed.rest, onPass(parsed), this)
-          : parsed.consumed === ''
-              ? this
-              : Object.assign(parsed, {
-                consumed: consumed,
-                rest: this.consumed + this.rest
-              });
+      return parsed
+          .andThen((result: Result) => {
+            return new SuccessResult(consumed, result.rest, onPass(result), this);
+          })
+          .orElse((result: Result) => {
+            return result.consumed === ''
+                ? this
+                : Object.assign(result, {
+                  consumed: consumed,
+                  rest: this.consumed + this.rest
+                });
+          });
     }
 
     map(operator = (result: Result) => result): Result {
@@ -782,7 +784,7 @@ export module SIParser {
 
   class NullResult extends Result {
     constructor() {
-      super(false, '', '');
+      super('', '');
       this.name = 'NullResult';
     }
 
@@ -801,7 +803,11 @@ export module SIParser {
         public rest: string,
         public result?: any,
         public previousResult: Result = new NullResult()) {
-      super(true, rest, result, previousResult);
+      super(rest, result, previousResult);
+    }
+
+    andThen(onPass: (result: Result) => Result) {
+      return onPass(this);
     }
 
     andThenDo(
@@ -812,11 +818,14 @@ export module SIParser {
       console.log(`andThenDo: parsed = ${parsed.toString()}`);
 
       const consumed = this.consumed + parsed.consumed;
-      console.log(`andThenDo: this.consumed = '${this.consumed}', parsed.consumed = '${parsed.consumed}', consumed = '${consumed}'`);
 
-      return parsed.success
-          ? new SuccessResult(consumed, parsed.rest, onPass(parsed), this)
-          : new FailureResult(consumed, parsed.rest, this.result, this);
+      return parsed
+          .andThen((result: Result) => {
+            return new SuccessResult(consumed, result.rest, onPass(result), this);
+          })
+          .orElse((result: Result) => {
+            return new FailureResult(consumed, result.rest, this.result, this);
+          });
     }
 
     andThenPossiblyDo(
@@ -832,7 +841,11 @@ export module SIParser {
         public rest: string,
         public result?: any,
         public previousResult: Result = new NullResult()) {
-      super(false, consumed, rest, result, previousResult);
+      super(consumed, rest, result, previousResult);
+    }
+
+    orElse(onFail: (result: Result) => Result) {
+      return onFail(this);
     }
 
     orElseDo(

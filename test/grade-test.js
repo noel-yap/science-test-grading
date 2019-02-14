@@ -1,6 +1,7 @@
 import test from 'ava';
 
 import Grade from '../Grade.ts';
+import {SIParser} from "../SIParser";
 
 test('_adjustOrderOfMagnitude should divide by power of ten', t => {
   const observed = Grade._adjustOrderOfMagnitude(234.56789, 10);
@@ -11,21 +12,27 @@ test('_adjustOrderOfMagnitude should divide by power of ten', t => {
 test('_getParts should return parts', t => {
   const observed = Grade._getParts('100.kPa');
 
-  t.deepEqual(observed, {
-    significantFigures: 3,
-    normalizedMagnitude: 100E6,
-    normalizedUnits: 'g*m^-1*s^-2'
-  });
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      '100.kPa',
+      '',
+      {
+        significantFigures: 3,
+        normalizedMagnitude: 100E6,
+        normalizedUnits: 'g*m^-1*s^-2'
+      }));
 });
 
 test('_getParts should return parts for units only', t => {
   const observed = Grade._getParts('kPa');
 
-  t.deepEqual(observed, {
-    significantFigures: NaN,
-    normalizedMagnitude: NaN,
-    normalizedUnits: 'g*m^-1*s^-2'
-  });
+  t.deepEqual(observed, new SIParser.SuccessResult(
+      'kPa',
+    '',
+      {
+        significantFigures: NaN,
+        normalizedMagnitude: NaN,
+        normalizedUnits: 'g*m^-1*s^-2'
+      }));
 });
 
 test('_grade should give full credit', t => {

@@ -237,7 +237,7 @@ class Grade {
 
   static _getParts(expression) {
     try {
-      const normalizeExpressionResult = new SIParser.SIParser()._normalizeUnits(expression);
+      const normalizeExpressionResult = SIParser._normalizeUnits(expression);
       console.log(`_getParts: expression = ${expression}, normalized = ${normalizeExpressionResult}`);
 
       if (normalizeExpressionResult.success) {

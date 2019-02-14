@@ -4,7 +4,7 @@
  **/
 function normalizeUnits(string) {
   const normalizeUnitsResult = _throttle(
-      (string) => new SIParser.SIParser()._normalizeUnits(string),
+      (string) => SIParser._normalizeUnits(string),
       Array.prototype.slice.call(arguments));
   console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
 

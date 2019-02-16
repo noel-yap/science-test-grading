@@ -1,5 +1,5 @@
-class Properties {
-  static _getGradingProperties(spreadsheet) {
+export module Properties {
+  export function _getGradingProperties(spreadsheet) {
     const defaultValues = {
       "taker-answers-start-row": 6,
       "magnitude-portion": 0.75,
@@ -27,5 +27,3 @@ class Properties {
     return properties;
   }
 }
-
-module.exports = Properties;

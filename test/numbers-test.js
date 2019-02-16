@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import Numbers from '../Numbers.ts';
+import {Numbers} from '../Numbers';
 
 test('_isNaN should return false', t => {
   t.false(Numbers._isNaN(5));

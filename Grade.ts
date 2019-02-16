@@ -1,5 +1,5 @@
-let Numbers = __require('./Numbers.ts');
-let Properties = __require('./Properties.ts');
+import {Numbers} from './Numbers';
+import {Properties} from './Properties';
 import {ScientificNotation} from './ScientificNotation';
 import {SIParser} from './SIParser';
 
@@ -26,7 +26,7 @@ function grade(points, observed, expected) {
       return expected.map((e) => {
         try {
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}`);
-          const gradeResult = new Grade()._grade(gradingProperties, points, cell, e);
+          const gradeResult = Grade._grade(gradingProperties, points, cell, e);
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}, _grade = ${gradeResult}`);
 
           return gradeResult;
@@ -49,7 +49,7 @@ function grade(points, observed, expected) {
   }, []);
 }
 
-class Grade {
+export module Grade {
   /**
    * If no magnitude:
    *   .75 of full credit off
@@ -71,7 +71,7 @@ class Grade {
    * Else if incorrect units:
    *   .1875 of full credit off
    **/
-  _grade(gradingProperties, points, observed, expected) {
+  export function _grade(gradingProperties, points, observed, expected) {
     if (Array.isArray(expected[0])) {
       expected = expected[0];
     }
@@ -236,7 +236,7 @@ class Grade {
     return result;
   }
 
-  static _getParts(expression) {
+  export function _getParts(expression) {
     try {
       return SIParser._normalizeUnits(expression)
           .andThen((normalizeExpressionResult: SIParser.Result) => {
@@ -273,7 +273,7 @@ class Grade {
     }
   }
 
-  static _adjustOrderOfMagnitude(number, adjustBy) {
+  export function _adjustOrderOfMagnitude(number, adjustBy) {
     const numberOfSignificantFigures = Numbers._numberOfSignificantFigures(number.toString());
     const orderOfMagnitude = Numbers._orderOfMagnitude(number);
     console.log(`_adjustOrderOfMagnitude: adjustBy = ${adjustBy}, numberOfSignificantFigures = ${numberOfSignificantFigures}, orderOfMagnitude = ${orderOfMagnitude}`);
@@ -281,18 +281,10 @@ class Grade {
     return Numbers._round(number * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
   }
 
-  static _roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
+  function _roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
     console.log(`_roundToSignificantFigure: fewerSignificantFigures = ${fewerSignificantFigures}, moreSignificantFigures = ${moreSignificantFigures}`);
 
     return fewerSignificantFigures === moreSignificantFigures ||
         Numbers._round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures)) / Math.log(10)) + 1) === fewerSignificantFigures;
   }
 }
-
-function __require(file) {
-  try {
-    return require(file);
-  } catch (e) {}
-}
-
-module.exports = Grade;

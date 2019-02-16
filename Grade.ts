@@ -273,18 +273,11 @@ export module Grade {
     }
   }
 
-  export function _adjustOrderOfMagnitude(number, adjustBy) {
-    const numberOfSignificantFigures = Numbers._numberOfSignificantFigures(number.toString());
-    const orderOfMagnitude = Numbers._orderOfMagnitude(number);
+  export function _adjustOrderOfMagnitude(input: number, adjustBy: number): number {
+    const numberOfSignificantFigures = Numbers._numberOfSignificantFigures(input.toString());
+    const orderOfMagnitude = Numbers._orderOfMagnitude(input);
     console.log(`_adjustOrderOfMagnitude: adjustBy = ${adjustBy}, numberOfSignificantFigures = ${numberOfSignificantFigures}, orderOfMagnitude = ${orderOfMagnitude}`);
 
-    return Numbers._round(number * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
-  }
-
-  function _roundToSignificantFigure(fewerSignificantFigures, moreSignificantFigures) {
-    console.log(`_roundToSignificantFigure: fewerSignificantFigures = ${fewerSignificantFigures}, moreSignificantFigures = ${moreSignificantFigures}`);
-
-    return fewerSignificantFigures === moreSignificantFigures ||
-        Numbers._round(moreSignificantFigures, Math.floor(Math.log(Math.abs(moreSignificantFigures - fewerSignificantFigures)) / Math.log(10)) + 1) === fewerSignificantFigures;
+    return Numbers._round(input * Math.pow(10, -adjustBy), -adjustBy - (numberOfSignificantFigures - orderOfMagnitude));
   }
 }

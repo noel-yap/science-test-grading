@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import ScientificNotation from '../ScientificNotation.ts';
+import {ScientificNotation} from '../ScientificNotation';
 
 test('_sciToNum should convert scientific notatation', t => {
   const observed = ScientificNotation._sciToNum('234.567*10^89');

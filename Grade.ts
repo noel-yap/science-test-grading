@@ -1,6 +1,6 @@
 let Numbers = __require('./Numbers.ts');
-let ScientificNotation = __require('./ScientificNotation.ts');
 let Properties = __require('./Properties.ts');
+import {ScientificNotation} from './ScientificNotation';
 import {SIParser} from './SIParser';
 
 /**

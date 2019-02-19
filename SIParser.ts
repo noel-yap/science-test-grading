@@ -1,3 +1,5 @@
+import {Functions} from './Functions';
+
 export module SIParser {
   /**
    * BNF grammar:
@@ -119,7 +121,7 @@ export module SIParser {
         })
         .orElseDo((input: string) => {
           return _parseMagnitude(input).withName('magnitude')
-              .andThenDo((input: string) => _parseLiteral(input, '/'), (result: Result) => {
+              .andThenDo(Functions.bindRight(_parseLiteral, '/'), (result: Result) => {
                 return (termResult: Result) => {
                   const termExponents = termResult.result.exponents;
                   return Object.keys(termExponents).reduce((accum, elt) => {
@@ -129,12 +131,12 @@ export module SIParser {
                   }, termExponents);
                 };
               }).withName('divided-by')
-              .orElseDo((input: string) => _parseLiteral(input, '*'), (result: Result) => {
+              .orElseDo(Functions.bindRight(_parseLiteral, '*'), (result: Result) => {
                 return (termResult: Result) => {
                   return termResult.result.exponents;
                 };
               }).withName('multiplied-by')
-              .orElseDo((input: string) => _parseLiteral(input, ''), (result: Result) => {
+              .orElseDo(Functions.bindRight(_parseLiteral, ''), (result: Result) => {
                 return (termResult: Result) => {
                   return termResult.result.exponents;
                 };
@@ -200,8 +202,8 @@ export module SIParser {
    **/
   function _parseTimesTenToTheExponent(input: string): Result {
     return _parseLiteral(input, '*10^')
-        .orElseDo((input: string) => _parseLiteral(input, 'E'))
-        .orElseDo((input: string) => _parseLiteral(input, 'e'))
+        .orElseDo(Functions.bindRight(_parseLiteral, 'E'))
+        .orElseDo(Functions.bindRight(_parseLiteral, 'e'))
         .andThenDo(_parseExponent, (result: Result) => {
           return {
             exponent: result.result
@@ -231,7 +233,7 @@ export module SIParser {
   function _parseParenthesizedTerm(input: string): Result {
     return _parseLiteral(input, '(')
         .andThenDo(_parseTerm)
-        .andThenDo((input: string) => _parseLiteral(input, ')'), (result: Result) => result.previousResult.result)
+        .andThenDo(Functions.bindRight(_parseLiteral, ')'), (result: Result) => result.previousResult.result)
         .orElse((result: Result) => {
           return Object.assign(result, {
             rest: input
@@ -257,7 +259,7 @@ export module SIParser {
                     result: (n) => n
                   });
                 })
-                .orElseDo((input: string) => _parseLiteral(input, '/'), (result: Result) => {
+                .orElseDo(Functions.bindRight(_parseLiteral, '/'), (result: Result) => {
                   return (n) => n !== 0 ? -n : n;
                 })
                 .andThenDo(_parseUnits, (unitsResult: Result) => {
@@ -287,7 +289,7 @@ export module SIParser {
    **/
   export function _parseFactor(input: string): Result {
     return _parseBase(input)
-        .andThenPossiblyDo(_parseCaretExponent.bind(this), (result: Result) => {
+        .andThenPossiblyDo(_parseCaretExponent, (result: Result) => {
           console.log(`_parseFactor: result = ${result.toString()}`);
 
           return result.result(result.previousResult);
@@ -651,7 +653,7 @@ export module SIParser {
    **/
   export function _parseDecimal(input: string): Result {
     return _parseDigits(input).withName('integer-part')
-        .alsoPossiblyDo((input: string) => _parseLiteral(input, '.'), (result: Result) => {
+        .alsoPossiblyDo(Functions.bindRight(_parseLiteral, '.'), (result: Result) => {
           return result.previousResult.result || 0;
         }).withName('integer-part')
         .alsoPossiblyDo(_parseDigits, (result: Result) => {

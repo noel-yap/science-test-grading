@@ -1,3 +1,4 @@
+import {Functions} from "./Functions";
 import {SIParser} from "./SIParser";
 
 /**
@@ -6,21 +7,21 @@ import {SIParser} from "./SIParser";
  **/
 function normalizeUnits(input) {
   const normalizeUnitsResult = _throttle(
-      (string) => SIParser._normalizeUnits(string),
+      Functions.bindLeft(SIParser._normalizeUnits),
       Array.prototype.slice.call(arguments));
-  try {
-    return normalizeUnitsResult
-        .andThen((normalizeUnitsResult: SIParser.Result) => {
-          console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
+ 
+  return (normalizeUnitsResult instanceof SIParser.SuccessResult
+      ? () => {
+        console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
 
-          const magnitudeString = normalizeUnitsResult.result.magnitude;
-          const unitsString = normalizeUnitsResult.result.units;
+        const magnitudeString = normalizeUnitsResult.result.magnitude;
+        const unitsString = normalizeUnitsResult.result.units;
 
-          return `${magnitudeString} ${unitsString}`.trim();
-        });
-  } catch (e: Error) {
-    throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${input}'. Are you sure metric units are being used?`);
-  }
+        return `${magnitudeString} ${unitsString}`.trim();
+      }
+      : () => {
+        throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${input}'. Are you sure metric units are being used?`);
+      })();
 }
 
 /**

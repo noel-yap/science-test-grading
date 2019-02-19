@@ -1,20 +1,22 @@
-function throttle(result) {
-  const MAX_SLEEP = 250;
+export module Throttle {
+  export function throttle(result: any): any {
+    const MAX_SLEEP = 250;
 
-  const cache = CacheService.getScriptCache();
-  
-  const cacheKey = 'exec qps';
-  const lastCall = parseInt(cache.get(cacheKey)) || new Date().getTime();
-  
-  Utilities.sleep(Math.min(MAX_SLEEP, new Date().getTime() - lastCall));
+    const cache = CacheService.getScriptCache();
 
-  cache.put(cacheKey, new Date().getTime().toString(), 1);
+    const cacheKey = 'exec qps';
+    const lastCall = parseInt(cache.get(cacheKey)) || new Date().getTime();
 
-  return result;
-}
+    Utilities.sleep(Math.min(MAX_SLEEP, new Date().getTime() - lastCall));
 
-function _throttle(fn, args) {
-  console.log(`_throttle: ${fn}(${args})`);
-  
-  return throttle(fn.apply(this, args));
+    cache.put(cacheKey, new Date().getTime().toString(), 1);
+
+    return result;
+  }
+
+  export function _throttle(fn: () => any): any {
+    console.log(`_throttle: ${fn}()`);
+
+    return throttle(fn());
+  }
 }

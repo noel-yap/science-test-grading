@@ -10,7 +10,7 @@ import {SIParser} from './SIParser';
  *
  * @return          Matrix of earned points along with rationales for points taken off.
  **/
-function grade(points, observed, expected) {
+function grade(points: number, observed: any, expected: string[]): number {
   const gradingProperties = Properties._getGradingProperties(SpreadsheetApp.getActiveSpreadsheet());
 
   // expected becomes an array of the rest of the arguments
@@ -21,9 +21,9 @@ function grade(points, observed, expected) {
     observed = [[observed]];
   }
 
-  return observed.map((row) => {
-    return row.map((cell) => {
-      return expected.map((e) => {
+  return observed.map((row: string[]): [number, string][] => {
+    return row.map((cell: string): [number, string] => {
+      return expected.map((e: string): [number, string] => {
         try {
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}`);
           const gradeResult = Grade._grade(gradingProperties, points, cell, e);
@@ -33,9 +33,9 @@ function grade(points, observed, expected) {
         } catch (e) {
           console.log(`grade: e = ${e}`);
 
-          return [0.0, e.fileName + ':' + e.lineNumber + ': ' + e.toString()];
+          return [0.0, `${e.fileName}:${e.lineNumber}:${e.toString()}`];
         }
-      }).reduce((accum, cellGradeVsExpected) => {
+      }).reduce((accum: [number, string], cellGradeVsExpected: [number, string]): [number, string] => {
         const [maxGrade, maxGradeReason] = accum;
 
         console.log(`grade: accum = ${accum}, elt = ${cellGradeVsExpected}`);
@@ -44,7 +44,7 @@ function grade(points, observed, expected) {
             : accum;
       }, [-points, undefined]);
     });
-  }).reduce((accum, rowGrades) => {
+  }).reduce((accum: [number, string][], rowGrades: [number, string]): [number, string][] => {
     return accum.concat(rowGrades);
   }, []);
 }
@@ -71,7 +71,7 @@ export module Grade {
    * Else if incorrect units:
    *   .1875 of full credit off
    **/
-  export function _grade(gradingProperties, points, observed, expected) {
+  export function _grade(gradingProperties: object, points: number, observed: string, expected: string): [number, string] {
     if (Array.isArray(expected[0])) {
       expected = expected[0];
     }
@@ -85,7 +85,7 @@ export module Grade {
       maxExpectedNormalizedMagnitude,
       maxExpectedNormalizedUnits,
       maxExpectedSignificantFigures] = (Array.isArray(expected)
-        ? () => {
+        ? (): [number, string, number, number, string, number] => {
           const minExpected = expected[0];
           const maxExpected = expected[expected.length - 1];
           console.log(`_grade: minExpected = ${minExpected}, maxExpected = ${maxExpected}`);
@@ -102,7 +102,7 @@ export module Grade {
             maxExpectedParts.result.normalizedUnits,
             maxExpectedParts.result.significantFigures];
         }
-        : () => {
+        : (): [number, string, number, number, string, number] => {
           const expectedParts = Grade._getParts(expected);
 
           return [
@@ -216,9 +216,9 @@ export module Grade {
     const result = []
         .concat(noExpectedMagnitude ? [] : magnitudeCredit)
         .concat(noExpectedUnits ? [] : unitsCredit)
-        .filter((elt) => {
+        .filter((elt: [number, string][]): boolean => {
           return elt[1] !== undefined;
-        }).reduce((accum, elt) => {
+        }).reduce((accum: [number, string], elt: [number, string]): [number, string] => {
           return [accum[0] + elt[0], [accum[1], elt[1]].join(' ')];
         }, [0.0, '']);
     console.log(`_grade: result = ${result}`);
@@ -236,7 +236,7 @@ export module Grade {
     return result;
   }
 
-  export function _getParts(expression) {
+  export function _getParts(expression: string): SIParser.Result {
     try {
       return SIParser._normalizeUnits(expression)
           .andThen((normalizeExpressionResult: SIParser.Result) => {
@@ -261,7 +261,7 @@ export module Grade {
               }
             });
           })
-          .orElse((normalizeExpressionResult: SIParser.Result) => {
+          .orElse((normalizeExpressionResult: SIParser.Result): SIParser.Result => {
             throw new Error(`Unable to parse after '${normalizeExpressionResult.consumed}' in '${expression}'. Non-metric units might be being used.`);
           });
     } catch (e) {

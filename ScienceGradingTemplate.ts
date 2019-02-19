@@ -12,7 +12,7 @@ function normalizeUnits(input): string {
       Functions.bindLeft(SIParser._normalizeUnits, input));
  
   return (normalizeUnitsResult instanceof SIParser.SuccessResult
-      ? () => {
+      ? (): string => {
         console.log(`_normalizeUnits: normalizeUnitsResult = ${JSON.stringify(normalizeUnitsResult)}`);
 
         const magnitudeString = normalizeUnitsResult.result.magnitude;
@@ -20,7 +20,7 @@ function normalizeUnits(input): string {
 
         return `${magnitudeString} ${unitsString}`.trim();
       }
-      : () => {
+      : (): string => {
         throw new Error(`Unable to parse after '${normalizeUnitsResult.consumed}' in '${input}'. Are you sure metric units are being used?`);
       })();
 }
@@ -31,7 +31,7 @@ function normalizeUnits(input): string {
 function sciToNum(formula: string): number {
   console.log(`sciToNum: ${formula}`);
   return Throttle._throttle(
-      Functions.bindLeft(ScientificNotation._sciToNum, formula);
+      Functions.bindLeft(ScientificNotation._sciToNum, formula));
 }
 
 function numToSci(input: number, numberOfSignificantFigures: number): string {

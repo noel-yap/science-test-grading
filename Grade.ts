@@ -4,13 +4,14 @@ import {ScientificNotation} from './ScientificNotation';
 import {SIParser} from './SIParser';
 
 /**
- * @param points    Number of full-credit points.
- * @param observed  Cell or matrix of student answers.
- * @param expected  Array of cell or matrix of expected answers. A matrix row is treated as a lower-bound, the first element, and upper-bound, the last element, interval.
+ * @param exactMatch  True if exact match only (eg no partial credit).
+ * @param points      Number of full-credit points.
+ * @param observed    Cell or matrix of student answers.
+ * @param expected    Array of cell or matrix of expected answers. A matrix row is treated as a lower-bound, the first element, and upper-bound, the last element, interval.
  *
- * @return          Matrix of earned points along with rationales for points taken off.
+ * @return            Matrix of earned points along with rationales for points taken off.
  **/
-function grade(points: number, observed: any, expected: string[]): number {
+function grade(exactMatch: boolean, points: number, observed: any, expected: string[]): number {
   const gradingProperties = Properties._getGradingProperties(SpreadsheetApp.getActiveSpreadsheet());
 
   // expected becomes an array of the rest of the arguments
@@ -25,20 +26,17 @@ function grade(points: number, observed: any, expected: string[]): number {
     return row.map((cell: string): [number, string] => {
       return expected.map((e: string): [number, string] => {
         try {
-          console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}`);
-          const gradeResult = Grade._grade(gradingProperties, points, cell, e);
+          console.log(`grade: exactMatch = ${exactMatch}, points = ${points}, cell = ${cell}, e = ${e}`);
+          const gradeResult = Grade._grade(exactMatch, gradingProperties, points, cell, e);
           console.log(`grade: points = ${points}, cell = ${cell}, e = ${e}, _grade = ${gradeResult}`);
 
           return gradeResult;
         } catch (e) {
-          console.log(`grade: e = ${e}`);
-
           return [0.0, `${e.fileName}:${e.lineNumber}:${e.toString()}`];
         }
       }).reduce((accum: [number, string], cellGradeVsExpected: [number, string]): [number, string] => {
         const [maxGrade, maxGradeReason] = accum;
 
-        console.log(`grade: accum = ${accum}, elt = ${cellGradeVsExpected}`);
         return (maxGradeReason === undefined || maxGradeReason.toString().indexOf('Error:') === 0 || cellGradeVsExpected[0] > maxGrade)
             ? cellGradeVsExpected
             : accum;
@@ -71,12 +69,19 @@ export module Grade {
    * Else if incorrect units:
    *   .1875 of full credit off
    **/
-  export function _grade(gradingProperties: object, points: number, observed: string, expected: string): [number, string] {
+  export function _grade(exactMatch: boolean, gradingProperties: object, points: number, observed: string, expected: string): [number, string] {
     if (Array.isArray(expected[0])) {
       expected = expected[0];
     }
 
     console.log(`_grade: observed = ${observed}, expected = ${expected}`);
+    if (observed === '' && expected !== '') {
+      return [0, ''];
+    } else if (exactMatch) {
+      return observed.toString().toLowerCase() !== expected.toString().toLowerCase()
+          ? [0, 'Incorrect answer.']
+          : [points, ''];
+    }
 
     const [
       minExpectedNormalizedMagnitude,
@@ -222,16 +227,9 @@ export module Grade {
           return [accum[0] + elt[0], [accum[1], elt[1]].join(' ')];
         }, [0.0, '']);
     console.log(`_grade: result = ${result}`);
-    result[0] = points
-        - points
-        * result[0]
-        / (noExpectedMagnitude ? unitsPortion : 1)
-        / (noExpectedUnits ? magnitudePortion : 1);
+    result[0] = points *
+        (1 - result[0] / (noExpectedMagnitude ? unitsPortion : 1) / (noExpectedUnits ? magnitudePortion : 1));
     result[1] = result[1].trim();
-
-    if (observed === '') {
-      result[1] = '';
-    }
 
     return result;
   }

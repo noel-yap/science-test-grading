@@ -1,3 +1,5 @@
+import {Properties} from './Properties';
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   // Or DocumentApp or FormApp.
@@ -17,7 +19,7 @@ function recalculatePoints() {
 }
 
 function _recalculatePoints(gradersEntriesSheet) {
-  const takerAnswersStartRow = _getGradingProperties(gradersEntriesSheet.getParent())['taker-answers-start-row'];
+  const takerAnswersStartRow = Properties._getGradingProperties(gradersEntriesSheet.getParent())['taker-answers-start-row'];
   const answersHeaderRow = takerAnswersStartRow - 2;
   
   const dataRange = gradersEntriesSheet.getDataRange();
@@ -71,7 +73,7 @@ function _createKataGradersEntriesSheetFrom(fromSheet) {
   const spreadsheet = fromSheet.getParent();
   const fromSheetName = fromSheet.getName();
 
-  const takerAnswersStartRow = _getGradingProperties(spreadsheet)['taker-answers-start-row'];
+  const takerAnswersStartRow = Properties._getGradingProperties(spreadsheet)['taker-answers-start-row'];
   const creatorAnswersRow = takerAnswersStartRow - 1;
   
   const kataGradersEntriesName = 'Kata Graders Entries';
@@ -158,7 +160,7 @@ function _updateGradesVerificationSheetFrom(anaGradersEntriesSheet, kataGradersE
 }
 
 function _hideSheetsNotUsedDirectlyByGraders(spreadsheet) {
-  const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
+  const sheetNames = Properties._getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
       .forEach((sheetName) => {
@@ -171,7 +173,7 @@ function _hideSheetsNotUsedDirectlyByGraders(spreadsheet) {
 }
 
 function _showSheetsNotUsedDirectlyByGraders(spreadsheet) {
-  const sheetNames = _getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
+  const sheetNames = Properties._getGradingProperties(spreadsheet)['sheets-to-hide-from-graders'];
   
   sheetNames.split(',')
       .forEach((sheetName) => {

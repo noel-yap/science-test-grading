@@ -10,3 +10,19 @@ test('compose should compose', t => {
 
   t.is(42, h(19, 2));
 });
+
+test('bindLeft should bind', t => {
+  const f = (lhs, rhs) => lhs - rhs;
+
+  const g = Functions.bindLeft(f, 8, 5);
+
+  t.is(3, g());
+});
+
+test('bindLeft should bind from the left', t => {
+  const f = (lhs, rhs) => lhs - rhs;
+
+  const g = Functions.bindLeft(f, 8);
+
+  t.is(3, g(5));
+});
